@@ -36,9 +36,18 @@ Designed for iPhone and iPad, this app brings recipe management and shopping lis
 
 ## Screenshots
 
-*(Insert iPhone and iPad screenshots here)*
+
 
 ---
+![IMG_0666](https://github.com/user-attachments/assets/a9ed0310-97fc-4afd-9b93-5b0ccc03dc45)
+![IMG_0665](https://github.com/user-attachments/assets/bf286227-91f5-4ad5-b192-c1ef213260f0)
+![IMG_0664](https://github.com/user-attachments/assets/529ef002-8cea-4ce9-abdb-8c76524b9895)
+![IMG_0663](https://github.com/user-attachments/assets/a31ba44f-0a72-4220-bf7a-ee23273d8dee)
+![IMG_0662](https://github.com/user-attachments/assets/afea89fe-fb49-4481-9cbe-29cb359bd633)
+![IMG_0661](https://github.com/user-attachments/assets/b67e8870-1c5d-43ff-978e-f1eca8bd422a)
+![IMG_0660](https://github.com/user-attachments/assets/a9d93e50-10e5-48e1-b271-3fe8b4b7a8b4)
+![IMG_0659](https://github.com/user-attachments/assets/24b6a472-652b-437f-b0eb-c8739ef2a031)
+![IMG_0658](https://github.com/user-attachments/assets/7bc8224f-9fab-4c9d-a52b-a2fd5d7d6553)
 
 ## Contributing
 
