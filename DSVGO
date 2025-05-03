@@ -1,0 +1,34 @@
+Datenschutzerklärung
+
+Stand: Mai 2025
+
+1. Allgemeines
+Die App Mealie Recipes ist eine rein lokal installierte Anwendung, die zur Nutzung mit einem selbstgehosteten Mealie-Server gedacht ist. Sie speichert keine Daten auf externen Servern des App-Anbieters und überträgt keine personenbezogenen Informationen an Dritte.
+
+2. Verantwortlicher
+Diese App ist ein Open-Source-Community-Projekt. Es erfolgt keine zentrale Datenerhebung oder zentrale Verarbeitung durch den Entwickler. Alle Daten verbleiben auf dem Endgerät oder dem von Ihnen eingerichteten Mealie-Server.
+
+3. Welche Daten verarbeitet die App?
+Lokal auf dem Gerät:
+
+Konfigurationsdaten wie Server-URL, API-Token, Spracheinstellungen
+Einkaufslisten, archivierte Einträge und Rezepte (nur zur Anzeige/Zwischenspeicherung)
+Beim Verwenden eines eigenen Mealie-Servers:
+
+Die App kommuniziert mit deinem selbstgehosteten Server über HTTPS. Alle Daten (Rezepte, Einkaufslisten etc.) werden nur zwischen deinem Gerät und deinem Server ausgetauscht.
+Der Entwickler der App hat keinen Zugriff auf diese Daten.
+Optional:
+
+Wenn du die Funktion „Rezept-Upload via OpenAI“ verwendest, werden Rezeptbilder oder URLs an die OpenAI-API übermittelt. Dies erfolgt verschlüsselt über HTTPS. Die Nutzung dieser Funktion setzt voraus, dass du selbst einen OpenAI API-Schlüssel in der App hinterlegst. Der Schlüssel wird nur lokal gespeichert.
+4. Keine Weitergabe an Dritte
+Die App gibt keine personenbezogenen Daten an Dritte weiter. Es findet keine Analyse oder Nachverfolgung durch Tracking-Dienste statt.
+
+5. Rechte der Nutzer:innen
+Da keine personenbezogenen Daten zentral verarbeitet werden, besteht keine Pflicht zur Löschung oder Auskunft gegenüber dem App-Entwickler. Alle Daten werden ausschließlich lokal oder auf deinem eigenen Server verwaltet.
+
+6. Kontakt
+Da es sich um ein Community-Projekt handelt, erreichst du das Entwicklerteam ausschließlich über GitHub:
+👉 https://github.com/Walfrosch92/Mealie-Recipes-iOS-APP
+
+Hinweis: Diese App erhebt keine Daten im Sinne der DSGVO, verarbeitet keine Nutzerprofile und erfordert keine Einwilligung zur Datennutzung.
+
