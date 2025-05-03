@@ -1,11 +1,14 @@
 # Mealie-Recipes-iOS-APP
-A native SwiftUI app for iOS and iPadOS that connects to your self-hosted Mealie server. Browse recipes, manage your shopping list, and cook with smart timers – all fully integrated via the Mealie API.
 
+A native SwiftUI app for iOS and iPadOS that connects to your self-hosted Mealie server.  
+Browse recipes, manage your shopping list, upload new recipes – now with image and URL import powered by OpenAI – all fully integrated via the Mealie API.
 
-# Mealie iOS App (Community Project)
+---
+
+## Mealie iOS App (Community Project)
 
 A native iOS app built with SwiftUI to connect to your self-hosted [Mealie](https://github.com/mealie-recipes/mealie) server via the official API.  
-Designed for iPhone and iPad, this app brings recipe management and shopping lists to your fingertips – fully integrated with your Mealie instance.
+Designed for iPhone and iPad, this app brings recipe management, shopping lists, and smart uploads to your fingertips.
 
 ---
 
@@ -14,6 +17,7 @@ Designed for iPhone and iPad, this app brings recipe management and shopping lis
 ### Setup
 - Configure your Mealie server URL, API token, and optional custom headers.
 - Quick access to recipes, shopping list, archived lists, and settings.
+- Multi-language support (English & German).
 
 ### Recipes
 - Browse all recipes from your Mealie server.
@@ -21,6 +25,9 @@ Designed for iPhone and iPad, this app brings recipe management and shopping lis
 - Add ingredients (individually or all) to the shopping list.
 - **Built-in Timer**: Start, modify, or cancel timers with audible alerts.
 - **Ingredient Scaling**: Instantly view 0.5x, 1x, 2x, or 3x ingredient quantities.
+
+### Recipe Upload
+- Upload new recipes to Mealie via Image or URL.
 
 ### Shopping List
 - Fully synced with Mealie’s shopping list API.
@@ -46,11 +53,6 @@ Designed for iPhone and iPad, this app brings recipe management and shopping lis
 ![IMG_0665](https://github.com/user-attachments/assets/bf286227-91f5-4ad5-b192-c1ef213260f0)
 ![IMG_0664](https://github.com/user-attachments/assets/529ef002-8cea-4ce9-abdb-8c76524b9895)
 
-
-
-
-
-
 ---
 
 ## Contributing
@@ -64,7 +66,7 @@ Whether you're a Swift developer or just love Mealie – your feedback and suppo
 
 - [ ] Offline mode
 - [ ] Caching for recipes and shopping list
-- [x] **Recipe upload support** (also works with OpenAi)
+- [x] **Recipe upload support** (Text, Image & URL – powered by OpenAI)
 - [x] Multi-language support (German & English)
 
 ---
