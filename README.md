@@ -64,8 +64,8 @@ Whether you're a Swift developer or just love Mealie – your feedback and suppo
 
 - [ ] Offline mode
 - [ ] Caching for recipes and shopping list
-- [ ] **Recipe upload support**
-- [ ] Multi-language support
+- [x] **Recipe upload support** (also works with OpenAi)
+- [x] Multi-language support (German & English)
 
 ---
 
