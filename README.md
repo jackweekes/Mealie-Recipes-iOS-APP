@@ -1,7 +1,8 @@
 # Mealie-Recipes-iOS-APP
 
 A native SwiftUI app for iOS and iPadOS that connects to your self-hosted Mealie server.  
-Browse recipes, manage your shopping list, upload new recipes – now with image and URL import powered by OpenAI – all fully integrated via the Mealie API.
+Browse recipes, manage your shopping list, upload new recipes – now with image and URL import powered by OpenAI – all fully integrated via the Mealie API.  
+**Now available on the [App Store](https://apps.apple.com/us/app/mealie-recipes/id6745433997)!**
 
 ---
 
