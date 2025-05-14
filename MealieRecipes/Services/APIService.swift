@@ -54,6 +54,55 @@ class APIService {
         return request
     }
 
+    // MARK: - Rezepte
+
+    func fetchRecipes() async throws -> [RecipeSummary] {
+        let request = try createRequest(path: "api/recipes")
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        struct RecipesResponse: Decodable {
+            let items: [RecipeSummary]
+        }
+
+        return try JSONDecoder().decode(RecipesResponse.self, from: data).items
+    }
+
+    func fetchRecipeDetail(id: String) async throws -> RecipeDetail {
+        let request = try createRequest(path: "api/recipes/\(id)")
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try JSONDecoder().decode(RecipeDetail.self, from: data)
+    }
+
+    func uploadRecipeStruct(_ recipe: RecipeCreatePayload) async throws {
+        let body = try JSONEncoder().encode(recipe)
+        let request = try createRequest(path: "api/recipes/", method: "POST", body: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📤 POST /api/recipes Status: \(httpResponse.statusCode)")
+            print("📦 Antwort: \(String(data: data, encoding: .utf8) ?? "(leer)")")
+            guard httpResponse.statusCode == 201 else {
+                throw URLError(.badServerResponse)
+            }
+        }
+    }
+
+    func deleteRecipe(recipeId: UUID) async throws {
+        guard let baseURL = getBaseURL() else { throw URLError(.badURL) }
+        var request = URLRequest(url: baseURL.appendingPathComponent("/api/recipes/\(recipeId.uuidString)"))
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(getToken() ?? "")", forHTTPHeaderField: "Authorization")
+
+        for (key, value) in getOptionalHeaders where !key.isEmpty && !value.isEmpty {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
     // MARK: - JSON Upload
 
     func uploadRecipeJSON(_ json: String) async throws {
@@ -90,7 +139,11 @@ class APIService {
         }
     }
 
-    // MARK: - URL Import
+    func uploadRecipeFromJSON(_ recipe: [String: Any]) async throws {
+        let jsonData = try JSONSerialization.data(withJSONObject: recipe)
+        let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
+        try await uploadRecipeJSON(jsonString)
+    }
 
     func uploadRecipeFromURL(url: String) async throws -> String {
         let payload = ["url": url]
@@ -109,8 +162,6 @@ class APIService {
         return String(data: data, encoding: .utf8)?
             .trimmingCharacters(in: .whitespacesAndNewlines.union(.init(charactersIn: "\""))) ?? ""
     }
-
-    // MARK: - Image Upload
 
     func uploadRecipeImage(_ image: UIImage, translateLanguage: String = "de-DE") async throws -> String {
         guard let baseURL, let token else {
@@ -159,7 +210,7 @@ class APIService {
             .trimmingCharacters(in: .whitespacesAndNewlines.union(.init(charactersIn: "\""))) ?? ""
     }
 
-    // MARK: - Shopping List
+    // MARK: - Einkaufslisten
 
     func fetchShoppingListItems() async throws -> [ShoppingItem] {
         let request = try createRequest(path: "api/households/shopping/items")
@@ -170,12 +221,6 @@ class APIService {
         }
 
         return try JSONDecoder().decode(Response.self, from: data).items
-    }
-
-    func uploadRecipeFromJSON(_ recipe: [String: Any]) async throws {
-        let jsonData = try JSONSerialization.data(withJSONObject: recipe)
-        let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
-        try await uploadRecipeJSON(jsonString)
     }
 
     func addShoppingItem(note: String) async throws -> ShoppingItem {
@@ -236,38 +281,64 @@ class APIService {
         }
     }
 
-    // MARK: - Rezepte
-
-    func fetchRecipes() async throws -> [RecipeSummary] {
-        let request = try createRequest(path: "api/recipes")
+    func fetchShoppingLists() async throws -> [ShoppingList] {
+        let request = try createRequest(path: "api/households/shopping/lists")
         let (data, _) = try await URLSession.shared.data(for: request)
 
-        struct RecipesResponse: Decodable {
-            let items: [RecipeSummary]
-        }
-
-        return try JSONDecoder().decode(RecipesResponse.self, from: data).items
+        let decoded = try JSONDecoder().decode(ShoppingListResponse.self, from: data)
+        return decoded.items
     }
 
-    func fetchRecipeDetail(id: String) async throws -> RecipeDetail {
-        let request = try createRequest(path: "api/recipes/\(id)")
+    // MARK: - Mealplan (flache Struktur)
+
+    func fetchMealplanEntries() async throws -> [MealplanEntry] {
+        let request = try createRequest(path: "api/households/mealplans")
         let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode(RecipeDetail.self, from: data)
+
+        struct Response: Decodable {
+            let items: [MealplanEntry]
+        }
+
+        return try JSONDecoder().decode(Response.self, from: data).items
     }
 
-    func uploadRecipeStruct(_ recipe: RecipeCreatePayload) async throws {
-        let body = try JSONEncoder().encode(recipe)
-        let request = try createRequest(path: "api/recipes/", method: "POST", body: body)
-        let (data, response) = try await URLSession.shared.data(for: request)
+    func addMealEntry(date: Date, slot: String, recipeId: String?, note: String?) async throws {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        let dateString = formatter.string(from: date)
 
-        if let httpResponse = response as? HTTPURLResponse {
-            print("📤 POST /api/recipes Status: \(httpResponse.statusCode)")
-            print("📦 Antwort: \(String(data: data, encoding: .utf8) ?? "(leer)")")
-            guard httpResponse.statusCode == 201 else {
-                throw URLError(.badServerResponse)
-            }
+        struct Payload: Codable {
+            let date: String
+            let entryType: String
+            let recipeId: String?
+            let title: String?
+        }
+
+        let payload = Payload(
+            date: dateString,
+            entryType: slot,
+            recipeId: recipeId,
+            title: recipeId == nil ? note : nil
+        )
+
+        let body = try JSONEncoder().encode(payload)
+        let request = try createRequest(path: "api/households/mealplans", method: "POST", body: body)
+        _ = try await URLSession.shared.data(for: request)
+    }
+
+
+
+    func deleteMealEntry(_ entryId: Int) async throws {
+        let path = "api/households/mealplans/\(entryId)"
+        let request = try createRequest(path: path, method: "DELETE")
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
         }
     }
+
 }
 
 // MARK: - Multipart-Erweiterung

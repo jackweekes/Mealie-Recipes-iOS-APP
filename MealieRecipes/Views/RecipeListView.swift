@@ -2,56 +2,103 @@ import SwiftUI
 
 struct RecipeListView: View {
     @StateObject private var viewModel = RecipeListViewModel()
-    @ObservedObject private var settings = AppSettings.shared
+    let settings = AppSettings.shared
     @State private var searchText = ""
+    @State private var selectedTag: Tag?
+
+    var allTags: [Tag] {
+        let all = viewModel.recipes.flatMap { $0.tags }
+        let unique = Dictionary(grouping: all, by: { $0.id }).compactMap { $0.value.first }
+        return unique.sorted(by: { $0.name < $1.name })
+    }
 
     var filteredRecipes: [RecipeSummary] {
-        if searchText.isEmpty {
-            return viewModel.recipes
-        } else {
-            return viewModel.recipes.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        viewModel.recipes.filter { recipe in
+            let matchesSearch = searchText.isEmpty ||
+                recipe.name.localizedCaseInsensitiveContains(searchText) ||
+                recipe.tags.contains(where: { $0.name.localizedCaseInsensitiveContains(searchText) })
+
+            let matchesTag = selectedTag == nil ||
+                recipe.tags.contains(where: { $0.id == selectedTag?.id })
+
+            return matchesSearch && matchesTag
         }
     }
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                let isLandscape = geometry.size.width > geometry.size.height
-                let horizontalPadding = isLandscape ? geometry.size.width * 0.2 : 0.0
+            List {
+                if !allTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            Button(action: {
+                                selectedTag = nil
+                            }) {
+                                Text(LocalizedStringProvider.localized("all"))
+                                    .font(.caption)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(selectedTag == nil ? Color.accentColor.opacity(0.2) : Color.gray.opacity(0.2))
+                                    .cornerRadius(6)
+                            }
 
-                VStack {
-                    Spacer()
-
-                    if viewModel.isLoading {
-                        ProgressView(LocalizedStringProvider.localized("loading_recipes"))
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .padding()
-                    } else if let errorMessage = viewModel.errorMessage {
-                        Text(String(format: LocalizedStringProvider.localized("error_loading_recipes"), errorMessage))
-                            .foregroundColor(.red)
-                            .padding()
-                    } else {
-                        List(filteredRecipes) { recipe in
-                            if let uuid = UUID(uuidString: recipe.id) {
-                                NavigationLink(destination: RecipeDetailView(recipeId: uuid)) {
-                                    Text(recipe.name)
-                                        .font(.headline)
+                            ForEach(allTags, id: \.id) { tag in
+                                Button(action: {
+                                    selectedTag = tag
+                                }) {
+                                    Text(tag.name)
+                                        .font(.caption)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(selectedTag?.id == tag.id ? Color.accentColor.opacity(0.2) : Color.gray.opacity(0.2))
+                                        .cornerRadius(6)
                                 }
-                            } else {
-                                Text(LocalizedStringProvider.localized("invalid_recipe_id"))
-                                    .foregroundColor(.red)
                             }
                         }
-                        .listStyle(.plain)
+                        .padding(.vertical, 4)
                     }
-
-                    Spacer()
                 }
-                .padding(.horizontal, horizontalPadding)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle(LocalizedStringProvider.localized("recipes"))
-                .searchable(text: $searchText, prompt: Text(LocalizedStringProvider.localized("search_recipe")))
+
+                if viewModel.isLoading {
+                    ProgressView(LocalizedStringProvider.localized("loading_recipes"))
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else if let errorMessage = viewModel.errorMessage {
+                    Text(String(format: LocalizedStringProvider.localized("error_loading_recipes"), errorMessage))
+                        .foregroundColor(.red)
+                } else {
+                    ForEach(filteredRecipes) { recipe in
+                        if let uuid = UUID(uuidString: recipe.id) {
+                            NavigationLink(destination: RecipeDetailView(recipeId: uuid)) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(recipe.name)
+                                        .font(.headline)
+
+                                    if !recipe.tags.isEmpty {
+                                        HStack {
+                                            ForEach(recipe.tags, id: \.id) { tag in
+                                                Text(tag.name)
+                                                    .font(.caption2)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.gray.opacity(0.2))
+                                                    .cornerRadius(4)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        } else {
+                            Text(LocalizedStringProvider.localized("invalid_recipe_id"))
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
             }
+            .listStyle(.plain)
+            .searchable(text: $searchText, prompt: Text(LocalizedStringProvider.localized("search_recipe")))
+            .navigationTitle(LocalizedStringProvider.localized("recipes"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 configureAPIIfNeeded()
@@ -82,4 +129,3 @@ struct RecipeListView: View {
         print("✅ [RecipeListView] API konfiguriert mit \(url), optionale Header: \(headers)")
     }
 }
-

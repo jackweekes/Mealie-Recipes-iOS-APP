@@ -3,8 +3,9 @@ import SwiftUI
 struct SetupView: View {
     var isInitialSetup: Bool = true
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var settings: AppSettings
 
-    @ObservedObject private var settings = AppSettings.shared
+    @State private var tempLanguage: String = AppSettings.shared.selectedLanguage
     @State private var tempServerURL: String = ""
     @State private var tempToken: String = ""
     @State private var tempHouseholdId: String = "Family"
@@ -18,7 +19,8 @@ struct SetupView: View {
     @State private var optionalHeaderKey3: String = ""
     @State private var optionalHeaderValue3: String = ""
 
-    @State private var isLoadingShoppingListId = false
+    @State private var shoppingLists: [ShoppingList] = []
+    @State private var isLoadingShoppingLists = false
     @State private var showResetConfirmation = false
 
     var body: some View {
@@ -31,13 +33,73 @@ struct SetupView: View {
                             .textContentType(.URL)
 
                         SecureFieldView(title: "Token", text: $tempToken)
-                        InputField(title: "Household ID", text: $tempHouseholdId)
+                        InputField(title: "Household", text: $tempHouseholdId)
+                    }
 
-                        if isLoadingShoppingListId {
-                            ProgressView(LocalizedStringProvider.localized("loading_shopping_list_id"))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        } else {
-                            InputField(title: "Shopping List ID", text: $tempShoppingListId)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(LocalizedStringProvider.localized("select_shopping_list"))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        HStack(spacing: 12) {
+                            Menu {
+                                ForEach(shoppingLists, id: \.id) { list in
+                                    Button(action: {
+                                        tempShoppingListId = list.id
+                                        print("✅ Selected shopping list: \(list.name)")
+                                    }) {
+                                        HStack {
+                                            Text(list.name)
+                                            if list.id == tempShoppingListId {
+                                                Spacer()
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack {
+                                    Text(
+                                        shoppingLists.first(where: { $0.id == tempShoppingListId })?.name
+                                        ?? LocalizedStringProvider.localized("no_lists_loaded")
+                                    )
+                                    .foregroundColor(.primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.gray)
+                                }
+                                .padding()
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .cornerRadius(10)
+                            }
+
+                            Button(action: {
+                                Task {
+                                    await fetchShoppingLists()
+                                }
+                            }) {
+                                Group {
+                                    if isLoadingShoppingLists {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
+                                            .frame(width: 24, height: 24)
+                                    } else {
+                                        Image(systemName: "arrow.clockwise")
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                .padding(8)
+                                .background(Color.accentColor.opacity(0.1))
+                                .clipShape(Circle())
+                            }
+                            .disabled(tempServerURL.isEmpty || tempToken.isEmpty)
+                            .accessibilityLabel(Text(LocalizedStringProvider.localized("reload_lists")))
+                        }
+
+                        if tempShoppingListId.isEmpty && shoppingLists.isEmpty {
+                            Text(LocalizedStringProvider.localized("no_lists_loaded"))
+                                .font(.footnote)
+                                .foregroundColor(.gray)
                         }
                     }
 
@@ -54,7 +116,6 @@ struct SetupView: View {
                         }
                     }
 
-                    // MARK: - Sprache
                     VStack(alignment: .leading, spacing: 8) {
                         Text(LocalizedStringProvider.localized("language"))
                             .font(.subheadline)
@@ -63,11 +124,12 @@ struct SetupView: View {
                         Menu {
                             ForEach(["de", "en"], id: \.self) { code in
                                 Button(action: {
-                                    settings.selectedLanguage = code
+                                    tempLanguage = code
+                                    LocalizedStringProvider.overrideLanguage = code
                                 }) {
                                     HStack {
                                         Text(languageName(for: code))
-                                        if settings.selectedLanguage == code {
+                                        if tempLanguage == code {
                                             Spacer()
                                             Image(systemName: "checkmark")
                                         }
@@ -76,7 +138,7 @@ struct SetupView: View {
                             }
                         } label: {
                             HStack {
-                                Text(languageName(for: settings.selectedLanguage))
+                                Text(languageName(for: tempLanguage))
                                     .foregroundColor(.primary)
                                 Spacer()
                                 Image(systemName: "chevron.down")
@@ -88,7 +150,6 @@ struct SetupView: View {
                         }
                     }
 
-                    // MARK: - Speichern
                     Button(action: {
                         saveSettings()
                         if !isInitialSetup {
@@ -128,8 +189,14 @@ struct SetupView: View {
                              ? LocalizedStringProvider.localized("initial_setup")
                              : LocalizedStringProvider.localized("settings"))
             .navigationBarTitleDisplayMode(.inline)
-            .id(settings.selectedLanguage)
-            .onAppear(perform: loadSettings)
+            .id(tempLanguage)
+            .onAppear {
+                loadSettings()
+                Task { await fetchShoppingLists() }
+            }
+            .onDisappear {
+                LocalizedStringProvider.overrideLanguage = nil
+            }
             .alert(LocalizedStringProvider.localized("confirm_reset"), isPresented: $showResetConfirmation) {
                 Button(LocalizedStringProvider.localized("cancel"), role: .cancel) {}
                 Button(LocalizedStringProvider.localized("reset"), role: .destructive) {
@@ -141,8 +208,6 @@ struct SetupView: View {
             }
         }
     }
-
-    // MARK: - Helper Views
 
     private func InputField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -172,8 +237,6 @@ struct SetupView: View {
         }
     }
 
-    // MARK: - Settings
-
     private func saveSettings() {
         settings.serverURL = tempServerURL
         settings.token = tempToken
@@ -185,51 +248,9 @@ struct SetupView: View {
         settings.optionalHeaderValue2 = optionalHeaderValue2
         settings.optionalHeaderKey3 = optionalHeaderKey3
         settings.optionalHeaderValue3 = optionalHeaderValue3
-
-        if tempShoppingListId.isEmpty,
-           let url = URL(string: tempServerURL) {
-            isLoadingShoppingListId = true
-            var headers: [String: String] = [:]
-            if tempSendOptionalHeaders {
-                headers[optionalHeaderKey1] = optionalHeaderValue1
-                headers[optionalHeaderKey2] = optionalHeaderValue2
-                headers[optionalHeaderKey3] = optionalHeaderValue3
-            }
-
-            APIService.shared.configure(baseURL: url, token: tempToken, optionalHeaders: headers)
-
-            Task {
-                do {
-                    struct TempShoppingItem: Decodable {
-                        let shoppingListId: String
-                    }
-                    struct TempResponse: Decodable {
-                        let items: [TempShoppingItem]
-                    }
-
-                    let requestURL = url.appendingPathComponent("api/households/shopping/items")
-                    var request = URLRequest(url: requestURL)
-                    request.setValue("Bearer \(tempToken)", forHTTPHeaderField: "Authorization")
-                    request.setValue("application/json", forHTTPHeaderField: "Accept")
-                    for (key, value) in headers where !key.isEmpty && !value.isEmpty {
-                        request.setValue(value, forHTTPHeaderField: key)
-                    }
-
-                    let (data, _) = try await URLSession.shared.data(for: request)
-                    let response = try JSONDecoder().decode(TempResponse.self, from: data)
-                    if let id = response.items.first?.shoppingListId {
-                        settings.shoppingListId = id
-                        tempShoppingListId = id
-                        print("✅ ShoppingListId automatisch gesetzt: \(id)")
-                    }
-                } catch {
-                    print("⚠️ Konnte ShoppingListId nicht laden: \(error)")
-                }
-                isLoadingShoppingListId = false
-            }
-        } else {
-            settings.shoppingListId = tempShoppingListId
-        }
+        settings.shoppingListId = tempShoppingListId
+        settings.selectedLanguage = tempLanguage
+        LocalizedStringProvider.overrideLanguage = nil
     }
 
     private func loadSettings() {
@@ -244,6 +265,8 @@ struct SetupView: View {
         optionalHeaderValue2 = settings.optionalHeaderValue2
         optionalHeaderKey3 = settings.optionalHeaderKey3
         optionalHeaderValue3 = settings.optionalHeaderValue3
+        tempLanguage = settings.selectedLanguage
+        LocalizedStringProvider.overrideLanguage = tempLanguage
     }
 
     private func resetAppSettings() {
@@ -258,5 +281,34 @@ struct SetupView: View {
         settings.optionalHeaderValue2 = ""
         settings.optionalHeaderKey3 = ""
         settings.optionalHeaderValue3 = ""
+    }
+
+    private func fetchShoppingLists() async {
+        guard !tempServerURL.isEmpty, !tempToken.isEmpty else { return }
+
+        isLoadingShoppingLists = true
+        var headers: [String: String] = [:]
+        if tempSendOptionalHeaders {
+            headers[optionalHeaderKey1] = optionalHeaderValue1
+            headers[optionalHeaderKey2] = optionalHeaderValue2
+            headers[optionalHeaderKey3] = optionalHeaderValue3
+        }
+
+        if let url = URL(string: tempServerURL) {
+            APIService.shared.configure(baseURL: url, token: tempToken, optionalHeaders: headers)
+
+            do {
+                shoppingLists = try await APIService.shared.fetchShoppingLists()
+                if let current = shoppingLists.first(where: { $0.id == tempShoppingListId }) {
+                    tempShoppingListId = current.id
+                } else if tempShoppingListId.isEmpty {
+                    tempShoppingListId = shoppingLists.first?.id ?? ""
+                }
+            } catch {
+                print("❌ Fehler beim Laden der Listen: \(error.localizedDescription)")
+            }
+        }
+
+        isLoadingShoppingLists = false
     }
 }

@@ -3,21 +3,33 @@ import SwiftUI
 @main
 struct MealieRecipesApp: App {
     @StateObject private var settings = AppSettings.shared
-    @StateObject private var shoppingListViewModel = ShoppingListViewModel()
+    @State private var viewModel: ShoppingListViewModel?
 
     init() {
-        AppSettings.shared.configureAPIService()
+        if AppSettings.shared.isConfigured {
+            AppSettings.shared.configureAPIService()
+        }
     }
 
     var body: some Scene {
         WindowGroup {
-            if settings.isConfigured {
-                WelcomeView()
-                    .environmentObject(shoppingListViewModel)
-            } else {
-                SetupView()
-                    .environmentObject(shoppingListViewModel)
+            Group {
+                if settings.isConfigured {
+                    if let viewModel = viewModel {
+                        WelcomeView()
+                            .environmentObject(viewModel)
+                    } else {
+                        WelcomeView()
+                            .onAppear {
+                                self.viewModel = ShoppingListViewModel()
+                            }
+                    }
+                } else {
+                    SetupView()
+                }
             }
+            .environmentObject(settings)
+            .id(settings.selectedLanguage) // ✅ erzwingt Rebuild bei Sprachwechsel
         }
     }
 }

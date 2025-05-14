@@ -5,13 +5,22 @@ struct ShoppingItem: Identifiable, Codable {
     var note: String?
     var checked: Bool
     var shoppingListId: String
+    var label: LabelWrapper? 
+
+    // Abgeleitete Kategorie für Gruppierung
+    var category: String? {
+        label?.name
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
         case note
         case checked
         case shoppingListId
+        case label
+    }
+
+    struct LabelWrapper: Codable {
+        let name: String
     }
 }
-
-

@@ -8,11 +8,13 @@ struct RecipeDetailView: View {
 
     @EnvironmentObject var shoppingListViewModel: ShoppingListViewModel
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.dismiss) var dismiss
 
     @State private var showIngredients = false
     @State private var showInstructions = false
     @State private var showSuccessAlert = false
     @State private var showTimerSheet = false
+    @State private var showDeleteConfirmation = false
     @State private var timerDurationMinutes: Double = 1
     @State private var completedIngredients: Set<UUID> = []
     @State private var completedInstructions: Set<UUID> = []
@@ -32,6 +34,29 @@ struct RecipeDetailView: View {
         }
         .navigationTitle(LocalizedStringProvider.localized("details"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+
+        .alert(isPresented: $showDeleteConfirmation) {
+            Alert(
+                title: Text(LocalizedStringProvider.localized("confirm_delete_title")),
+                message: Text(LocalizedStringProvider.localized("confirm_delete_message")),
+                primaryButton: .destructive(Text(LocalizedStringProvider.localized("delete"))) {
+                    Task {
+                        await deleteRecipe()
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
         .onAppear {
             viewModel.fetchRecipe(by: recipeId.uuidString)
             resetCompleted()
@@ -97,6 +122,16 @@ struct RecipeDetailView: View {
                 .onChange(of: keepScreenOn) {
                     UIApplication.shared.isIdleTimerDisabled = $0
                 }
+
+           
+            if !recipe.tags.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(LocalizedStringProvider.localized("tags"))
+                        .font(.headline)
+                    WrapHStack(tags: recipe.tags.map { $0.name })
+                }
+            }
+
         }
     }
 
@@ -256,7 +291,6 @@ struct RecipeDetailView: View {
         showSuccessAlert = true
     }
 
-    
     private func toggleIngredient(_ ingredient: Ingredient) {
         if completedIngredients.contains(ingredient.id) {
             completedIngredients.remove(ingredient.id)
@@ -336,6 +370,15 @@ struct RecipeDetailView: View {
             }
         }
     }
+
+    private func deleteRecipe() async {
+        do {
+            try await APIService.shared.deleteRecipe(recipeId: recipeId)
+            dismiss()
+        } catch {
+            print("Fehler beim Löschen: \(error.localizedDescription)")
+        }
+    }
 }
 
 struct AuthenticatedAsyncImage: View {
@@ -384,6 +427,23 @@ struct AuthenticatedAsyncImage: View {
             phase = .success(Image(uiImage: uiImage))
         } catch {
             phase = .failure(error)
+        }
+    }
+}
+
+struct WrapHStack: View {
+    let tags: [String]
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
+            ForEach(tags, id: \.self) { tag in
+                Text(tag)
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(6)
+            }
         }
     }
 }

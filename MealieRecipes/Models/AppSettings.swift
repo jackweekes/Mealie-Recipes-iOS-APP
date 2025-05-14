@@ -1,69 +1,76 @@
 import SwiftUI
+import Foundation
+import Combine
 
-class AppSettings: ObservableObject {
+final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
-    @Published var serverURL: String {
-        didSet { UserDefaults.standard.set(serverURL, forKey: "serverURL") }
+    private init() {
+        // Initialisiere published-Property aus UserDefaults
+        self.selectedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage")
+            ?? Locale.current.language.languageCode?.identifier ?? "de"
     }
 
-    @Published var token: String {
-        didSet { UserDefaults.standard.set(token, forKey: "token") }
-    }
-
-    @Published var householdId: String {
-        didSet { UserDefaults.standard.set(householdId, forKey: "householdId") }
-    }
-
-    @Published var shoppingListId: String {
-        didSet { UserDefaults.standard.set(shoppingListId, forKey: "shoppingListId") }
-    }
-
-    @Published var sendOptionalHeaders: Bool {
-        didSet { UserDefaults.standard.set(sendOptionalHeaders, forKey: "sendOptionalHeaders") }
-    }
-
-    @Published var optionalHeaderKey1: String {
-        didSet { UserDefaults.standard.set(optionalHeaderKey1, forKey: "optionalHeaderKey1") }
-    }
-
-    @Published var optionalHeaderValue1: String {
-        didSet { UserDefaults.standard.set(optionalHeaderValue1, forKey: "optionalHeaderValue1") }
-    }
-
-    @Published var optionalHeaderKey2: String {
-        didSet { UserDefaults.standard.set(optionalHeaderKey2, forKey: "optionalHeaderKey2") }
-    }
-
-    @Published var optionalHeaderValue2: String {
-        didSet { UserDefaults.standard.set(optionalHeaderValue2, forKey: "optionalHeaderValue2") }
-    }
-
-    @Published var optionalHeaderKey3: String {
-        didSet { UserDefaults.standard.set(optionalHeaderKey3, forKey: "optionalHeaderKey3") }
-    }
-
-    @Published var optionalHeaderValue3: String {
-        didSet { UserDefaults.standard.set(optionalHeaderValue3, forKey: "optionalHeaderValue3") }
-    }
-
+    //  Nur Sprachwechsel ist für SwiftUI relevant → deshalb @Published
     @Published var selectedLanguage: String {
-        didSet { UserDefaults.standard.set(selectedLanguage, forKey: "selectedLanguage") }
+        didSet {
+            UserDefaults.standard.set(selectedLanguage, forKey: "selectedLanguage")
+        }
     }
 
-    init() {
-        self.serverURL = UserDefaults.standard.string(forKey: "serverURL") ?? ""
-        self.token = UserDefaults.standard.string(forKey: "token") ?? ""
-        self.householdId = UserDefaults.standard.string(forKey: "householdId") ?? "Family"
-        self.shoppingListId = UserDefaults.standard.string(forKey: "shoppingListId") ?? ""
-        self.sendOptionalHeaders = UserDefaults.standard.bool(forKey: "sendOptionalHeaders")
-        self.optionalHeaderKey1 = UserDefaults.standard.string(forKey: "optionalHeaderKey1") ?? ""
-        self.optionalHeaderValue1 = UserDefaults.standard.string(forKey: "optionalHeaderValue1") ?? ""
-        self.optionalHeaderKey2 = UserDefaults.standard.string(forKey: "optionalHeaderKey2") ?? ""
-        self.optionalHeaderValue2 = UserDefaults.standard.string(forKey: "optionalHeaderValue2") ?? ""
-        self.optionalHeaderKey3 = UserDefaults.standard.string(forKey: "optionalHeaderKey3") ?? ""
-        self.optionalHeaderValue3 = UserDefaults.standard.string(forKey: "optionalHeaderValue3") ?? ""
-        self.selectedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage") ?? Locale.current.language.languageCode?.identifier ?? "de"
+    var serverURL: String {
+        get { UserDefaults.standard.string(forKey: "serverURL") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "serverURL") }
+    }
+
+    var token: String {
+        get { UserDefaults.standard.string(forKey: "token") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "token") }
+    }
+
+    var householdId: String {
+        get { UserDefaults.standard.string(forKey: "householdId") ?? "Family" }
+        set { UserDefaults.standard.set(newValue, forKey: "householdId") }
+    }
+
+    var shoppingListId: String {
+        get { UserDefaults.standard.string(forKey: "shoppingListId") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "shoppingListId") }
+    }
+
+    var sendOptionalHeaders: Bool {
+        get { UserDefaults.standard.bool(forKey: "sendOptionalHeaders") }
+        set { UserDefaults.standard.set(newValue, forKey: "sendOptionalHeaders") }
+    }
+
+    var optionalHeaderKey1: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderKey1") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderKey1") }
+    }
+
+    var optionalHeaderValue1: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderValue1") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderValue1") }
+    }
+
+    var optionalHeaderKey2: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderKey2") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderKey2") }
+    }
+
+    var optionalHeaderValue2: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderValue2") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderValue2") }
+    }
+
+    var optionalHeaderKey3: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderKey3") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderKey3") }
+    }
+
+    var optionalHeaderValue3: String {
+        get { UserDefaults.standard.string(forKey: "optionalHeaderValue3") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "optionalHeaderValue3") }
     }
 
     var isConfigured: Bool {
@@ -71,7 +78,7 @@ class AppSettings: ObservableObject {
     }
 }
 
-// MARK: - API Konfiguration
+
 
 extension AppSettings {
     func configureAPIService() {

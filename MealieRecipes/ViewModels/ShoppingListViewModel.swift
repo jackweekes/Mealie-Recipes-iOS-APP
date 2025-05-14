@@ -6,6 +6,7 @@ class ShoppingListViewModel: ObservableObject {
     @Published var archivedLists: [[ShoppingItem]] = []
 
     init() {
+        print("🛒 ShoppingListViewModel initialisiert")
         Task {
             await loadShoppingListFromServer()
         }
@@ -24,19 +25,22 @@ class ShoppingListViewModel: ObservableObject {
             do {
                 try await APIService.shared.updateShoppingItem(updated)
             } catch {
-                print("❌ Fehler beim Synchronisieren des Status in Mealie: \(error)")
+                print("❌ Fehler beim Synchronisieren des Status in Mealie: \(error.localizedDescription)")
                 updated.checked.toggle()
                 shoppingList[index] = updated
             }
         }
     }
 
-
     func deleteIngredient(at offsets: IndexSet) {
         for index in offsets {
             let item = shoppingList[index]
             Task {
-                try? await APIService.shared.deleteShoppingItem(id: item.id)
+                do {
+                    try await APIService.shared.deleteShoppingItem(id: item.id)
+                } catch {
+                    print("❌ Fehler beim Löschen eines Elements: \(error.localizedDescription)")
+                }
             }
         }
         shoppingList.remove(atOffsets: offsets)
@@ -49,7 +53,6 @@ class ShoppingListViewModel: ObservableObject {
         let cleaned = cleanedNote(from: trimmedNote)
         guard !cleaned.isEmpty else { return }
 
-        // Optional: Lokal prüfen, ob es den Eintrag schon gibt
         if shoppingList.contains(where: { $0.note?.lowercased() == cleaned.lowercased() }) {
             print("⚠️ '\(cleaned)' ist bereits in der Liste.")
             return
@@ -57,13 +60,10 @@ class ShoppingListViewModel: ObservableObject {
 
         Task {
             do {
-                // 1. Artikel an Mealie senden
                 _ = try await APIService.shared.addShoppingItem(note: cleaned)
 
-                // 2. Kurze Pause, um Serververarbeitung zu ermöglichen (optional)
                 try? await Task.sleep(nanoseconds: 250_000_000)
 
-                // 3. Liste vollständig neu vom Server laden
                 let updatedItems = try await APIService.shared.fetchShoppingListItems()
                 self.shoppingList = updatedItems
             } catch {
@@ -83,27 +83,25 @@ class ShoppingListViewModel: ObservableObject {
                 let note = cleanedNote(from: rawNote)
                 guard !note.isEmpty else { continue }
 
-                // Dubletten vermeiden
                 if !shoppingList.contains(where: { $0.note?.lowercased() == note.lowercased() }) {
                     do {
                         _ = try await APIService.shared.addShoppingItem(note: note)
                         newNotes.append(note)
                     } catch {
-                        print("❌ Fehler beim Hinzufügen von '\(note)': \(error)")
+                        print("❌ Fehler beim Hinzufügen von '\(note)': \(error.localizedDescription)")
                     }
                 } else {
                     print("⚠️ '\(note)' ist bereits auf der Liste.")
                 }
             }
 
-            // Wenn neue Artikel hinzugefügt wurden, dann vom Server neu laden
             if !newNotes.isEmpty {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 do {
                     let updatedItems = try await APIService.shared.fetchShoppingListItems()
                     self.shoppingList = updatedItems
                 } catch {
-                    print("❌ Fehler beim Neuladen der Liste: \(error)")
+                    print("❌ Fehler beim Neuladen der Liste: \(error.localizedDescription)")
                 }
             }
         }
@@ -121,7 +119,6 @@ class ShoppingListViewModel: ObservableObject {
         }
     }
 
-
     func deleteArchivedList(at offsets: IndexSet) {
         archivedLists.remove(atOffsets: offsets)
     }
@@ -136,8 +133,9 @@ class ShoppingListViewModel: ObservableObject {
         do {
             let items = try await APIService.shared.fetchShoppingListItems()
             self.shoppingList = items
+            print("✅ Einkaufsliste geladen: \(items.count) Einträge")
         } catch {
-            print("❌ Fehler beim Laden der Einkaufsliste von Mealie: \(error)")
+            print("❌ Fehler beim Laden der Einkaufsliste von Mealie: \(error.localizedDescription)")
         }
     }
 

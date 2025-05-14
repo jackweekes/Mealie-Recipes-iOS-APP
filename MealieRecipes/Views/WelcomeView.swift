@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @StateObject private var settings = AppSettings.shared
+    let settings = AppSettings.shared
 
     var body: some View {
         NavigationStack {
@@ -13,7 +13,7 @@ struct WelcomeView: View {
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                
+
                 Text(LocalizedStringProvider.localized("select_option"))
                     .font(.title2)
                     .foregroundColor(.secondary)
@@ -50,7 +50,7 @@ struct WelcomeView: View {
                             .foregroundColor(.white)
                             .cornerRadius(12)
                     }
-                    
+
                     NavigationLink(destination: RecipeUploadView()) {
                         Text(LocalizedStringProvider.localized("recipe_upload"))
                             .font(.headline)
@@ -61,6 +61,15 @@ struct WelcomeView: View {
                             .cornerRadius(12)
                     }
 
+                    NavigationLink(destination: MealplanView()) {
+                        Text(LocalizedStringProvider.localized("meal_plan"))
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
 
                     NavigationLink(destination: SetupView(isInitialSetup: false)) {
                         Text(LocalizedStringProvider.localized("settings"))
@@ -78,7 +87,6 @@ struct WelcomeView: View {
             }
             .padding()
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(LocalizedStringProvider.localized("home"))
             .onAppear {
                 if settings.isConfigured,
                    let url = URL(string: settings.serverURL) {

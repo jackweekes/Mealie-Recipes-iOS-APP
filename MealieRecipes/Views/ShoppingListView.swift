@@ -7,6 +7,7 @@ struct ShoppingListView: View {
     @State private var showSuccessToast = false
     @State private var showArchiveAlert = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var collapsedCategories: Set<String> = [] // ⬅️ NEU
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -71,23 +72,66 @@ struct ShoppingListView: View {
                         self.keyboardHeight = newHeight
                     }
                 }
+                .navigationTitle(" \(LocalizedStringProvider.localized("shopping_list"))")
+                .navigationBarTitleDisplayMode(.inline)
             }
         }
     }
 
     private var shoppingListItemsView: some View {
-        let sortedList = viewModel.shoppingList.sorted { !$0.checked && $1.checked }
+        let grouped = Dictionary(grouping: viewModel.shoppingList) { item in
+            (item.category?.isEmpty == false ? item.category : nil) ?? LocalizedStringProvider.localized("unlabeled_category")
+        }
+
+        let sortedCategories = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
         return VStack(spacing: 0) {
-            ForEach(sortedList) { item in
-                ShoppingListItemView(item: item) {
-                    viewModel.toggleIngredientCompletion(item)
+            ForEach(sortedCategories, id: \.self) { category in
+                VStack(alignment: .leading, spacing: 0) {
+                    Button(action: {
+                        withAnimation {
+                            if collapsedCategories.contains(category) {
+                                collapsedCategories.remove(category)
+                            } else {
+                                collapsedCategories.insert(category)
+                            }
+                        }
+                    }) {
+                        HStack {
+                            Text(category)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: collapsedCategories.contains(category) ? "chevron.down" : "chevron.right")
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    if !collapsedCategories.contains(category) {
+                        let items = grouped[category] ?? []
+                        let sortedItems = items.sorted { !$0.checked && $1.checked }
+
+                        ForEach(sortedItems) { item in
+                            ShoppingListItemView(item: item) {
+                                viewModel.toggleIngredientCompletion(item)
+                            }
+                        }
+                        .onDelete(perform: viewModel.deleteIngredient)
+                    }
                 }
+                .padding(.vertical, 4)
             }
-            .onDelete(perform: viewModel.deleteIngredient)
         }
         .background(Color(.systemGroupedBackground))
         .cornerRadius(12)
     }
+
+
 
     private func inputSection(padding: CGFloat) -> some View {
         VStack(spacing: 12) {
@@ -110,7 +154,7 @@ struct ShoppingListView: View {
                 .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
             }
 
-            if !viewModel.shoppingList.isEmpty {
+            if !viewModel.shoppingList.isEmpty && !isInputFocused {
                 Button {
                     viewModel.archiveList()
                     showArchiveAlert = true
@@ -119,6 +163,7 @@ struct ShoppingListView: View {
                         Image(systemName: "archivebox.fill")
                         Text(LocalizedStringProvider.localized("complete_shopping"))
                     }
+                    .font(.system(size: 16))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.accentColor)
@@ -164,14 +209,20 @@ struct ShoppingListItemView: View {
         Button(action: onTap) {
             HStack {
                 Text(item.note ?? "-")
+                    .font(.system(size: 16))
+                    .fontWeight(.semibold)
                     .strikethrough(item.checked, color: .gray)
                     .foregroundColor(item.checked ? .gray : .primary)
+
                 Spacer()
+
                 Image(systemName: item.checked ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
                     .foregroundColor(item.checked ? .green : .gray)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 20)
+            .background(Color(.systemBackground))
         }
         .buttonStyle(PlainButtonStyle())
     }
