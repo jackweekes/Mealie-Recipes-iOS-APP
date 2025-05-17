@@ -252,6 +252,7 @@ class APIService {
         struct LabelResponse: Decodable {
             let id: String
             let name: String
+            let color: String
         }
 
         struct PageResponse: Decodable {
@@ -259,7 +260,7 @@ class APIService {
         }
 
         let decoded = try JSONDecoder().decode(PageResponse.self, from: data)
-        return decoded.items.map { ShoppingItem.LabelWrapper(id: $0.id, name: $0.name) }
+        return decoded.items.map { ShoppingItem.LabelWrapper(id: $0.id, name: $0.name, color: $0.color) }
     }
 
     func fetchShoppingLists() async throws -> [ShoppingList] {

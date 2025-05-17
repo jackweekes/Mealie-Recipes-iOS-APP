@@ -93,6 +93,10 @@ struct ShoppingListView: View {
 
         return VStack(spacing: 0) {
             ForEach(sortedCategories, id: \.self) { category in
+                let items = grouped[category] ?? []
+                let labelColor = items.first?.label?.color
+                let backgroundColor = Color(hex: labelColor) ?? Color(.systemGray6)
+                let fgColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: {
                         withAnimation {
@@ -106,14 +110,15 @@ struct ShoppingListView: View {
                         HStack {
                             Text(category)
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundColor(fgColor)
                             Spacer()
                             Image(systemName: collapsedCategories.contains(category) ? "chevron.down" : "chevron.right")
-                                .foregroundColor(.gray)
+                                .foregroundColor(fgColor.opacity(0.7)) // slightly transparent for the icon
+                                
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 10)
-                        .background(Color(.systemGray6))
+                        .background(backgroundColor)
                         .cornerRadius(8)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -161,7 +166,7 @@ struct ShoppingListView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     categoryChip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
-                    ForEach(viewModel.availableLabels, id: \.id) { label in
+                    ForEach(viewModel.availableLabels.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }, id: \.id) { label in // Sort A-Z
                         categoryChip(label: label, name: label.name)
                     }
                 }
@@ -189,8 +194,8 @@ struct ShoppingListView: View {
             }
         }
         .padding(.horizontal, padding > 0 ? padding : 16)
-        .padding(.bottom, keyboardHeight > 0 ? keyboardHeight : 12)
-        .animation(.easeOut(duration: 0.3), value: keyboardHeight)
+        .padding(.bottom, 12)
+        .animation(.easeOut(duration: 0.1), value: keyboardHeight)
         .animation(.easeInOut, value: isInputFocused)
     }
 
@@ -301,5 +306,41 @@ extension Publishers {
                 return frame.height
             }
             .eraseToAnyPublisher()
+    }
+}
+
+extension Color {
+    init?(hex: String?) {
+        guard let hex = hex?.trimmingCharacters(in: CharacterSet.alphanumerics.inverted), let int = UInt64(hex, radix: 16) else {
+            return nil
+        }
+
+        let r, g, b, a: UInt64
+        switch hex.count {
+        case 6: // RGB (24-bit)
+            (r, g, b, a) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF, 255)
+        case 8: // ARGB (32-bit)
+            (r, g, b, a) = ((int >> 24) & 0xFF, (int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
+        default:
+            return nil
+        }
+
+        self.init(.sRGB, red: Double(r)/255, green: Double(g)/255, blue: Double(b)/255, opacity: Double(a)/255)
+    }
+}
+
+extension Color {
+    // Returns the brightness (perceived luminance) of the color (0 = dark, 1 = bright)
+    func brightness() -> CGFloat {
+        // Convert to UIColor to get RGB components
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        
+        // Calculate luminance with standard formula
+        return 0.299 * r + 0.587 * g + 0.114 * b
     }
 }
