@@ -118,7 +118,10 @@ struct SetupView: View {
                         }
                     }
                     
-                    Toggle("Enable Complete Shopping", isOn: $tempShowCompleteShoppingButton) // sorry this will need to be made localizable.
+                    Toggle(
+                        NSLocalizedString("Enable Complete Shopping", comment: "Enable Complete Shopping"),
+                        isOn: $settings.showCompleteShoppingButton
+                    ) // sorry this will need to be made localizable.
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(LocalizedStringProvider.localized("language"))

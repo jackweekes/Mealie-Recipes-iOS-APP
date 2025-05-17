@@ -14,6 +14,8 @@ final class AppSettings: ObservableObject {
         
         let savedLabels = UserDefaults.standard.stringArray(forKey: "collapsedLabels") ?? []
             self.collapsedLabels = Set(savedLabels)
+        
+        self.showCompleteShoppingButton = UserDefaults.standard.object(forKey: "showCompleteShoppingButton") as? Bool ?? true
     }
 
     //  Nur Sprachwechsel ist für SwiftUI relevant → deshalb @Published
@@ -82,7 +84,11 @@ final class AppSettings: ObservableObject {
         !serverURL.isEmpty && !token.isEmpty && !householdId.isEmpty && !shoppingListId.isEmpty
     }
     
-    @Published var showCompleteShoppingButton: Bool = true
+    @Published var showCompleteShoppingButton: Bool {
+        didSet {
+            UserDefaults.standard.set(showCompleteShoppingButton, forKey: "showCompleteShoppingButton")
+        }
+    }
     
     @Published var showCompletedItems: Bool {
         didSet {
