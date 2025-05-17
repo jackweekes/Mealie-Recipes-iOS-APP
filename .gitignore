@@ -1,6 +1,24 @@
-MealieRecipes/MealieRecipes/.DS_Store
+# macOS
 .DS_Store
-MealieRecipes/MealieRecipes.xcodeproj/project.pbxproj
-MealieRecipes/MealieRecipes.xcodeproj/project.pbxproj
-MealieRecipes/MealieRecipes.xcodeproj/project.xcworkspace/xcuserdata/jw.xcuserdatad/UserInterfaceState.xcuserstate
-MealieRecipes/MealieRecipes.xcodeproj/project.pbxproj
+
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# CocoaPods (optional)
+Pods/
+
+# Carthage (optional)
+Carthage/Build/
+
+# Fastlane (if used)
+fastlane/report.xml
+fastlane/screenshots
+fastlane/test_output
