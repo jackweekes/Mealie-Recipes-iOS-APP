@@ -10,6 +10,7 @@ struct ShoppingListView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var collapsedCategories: Set<String> = []
     @FocusState private var isInputFocused: Bool
+    @State private var showCompletedItems = true
 
     var body: some View {
         NavigationStack {
@@ -77,19 +78,31 @@ struct ShoppingListView: View {
                 }
                 .navigationTitle(" \(LocalizedStringProvider.localized("shopping_list"))")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showCompletedItems.toggle()
+                        }) {
+                            Image(systemName: showCompletedItems ? "eye" : "eye.slash")
+                        }
+                        .accessibilityLabel(Text(showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
+                    }
+                }
             }
         }
     }
 
     private var shoppingListItemsView: some View {
-        let grouped = Dictionary(grouping: viewModel.shoppingList) { item in
+        let filteredList = viewModel.shoppingList.filter { showCompletedItems || !$0.checked }
+
+        let grouped = Dictionary(grouping: filteredList) { item in
             item.label?.name ?? LocalizedStringProvider.localized("unlabeled_category")
         }
 
         let sortedCategories = grouped
             .filter { !$0.value.isEmpty }
             .keys
-            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
 
         return VStack(spacing: 0) {
             ForEach(sortedCategories, id: \.self) { category in
@@ -108,7 +121,7 @@ struct ShoppingListView: View {
                         }
                     }) {
                         HStack {
-                            Text(category)
+                            Text(category.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression)) // hides 1. , 2. , 3. , etc, useful for hidden sorting.
                                 .font(.headline)
                                 .foregroundColor(fgColor)
                             Spacer()
@@ -125,7 +138,9 @@ struct ShoppingListView: View {
 
                     if !collapsedCategories.contains(category) {
                         let items = grouped[category] ?? []
-                        let sortedItems = items.sorted { !$0.checked && $1.checked }
+                        let sortedItems = items
+                            .sorted { $0.note?.localizedStandardCompare($1.note ?? "") == .orderedAscending }
+                            .sorted { !$0.checked && $1.checked } // keeps unchecked first
 
                         ForEach(sortedItems) { item in
                             ShoppingListItemView(item: item) {
@@ -166,8 +181,8 @@ struct ShoppingListView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     categoryChip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
-                    ForEach(viewModel.availableLabels.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }, id: \.id) { label in // Sort A-Z
-                        categoryChip(label: label, name: label.name)
+                    ForEach(viewModel.availableLabels.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }, id: \.id) { label in // Sort A-Z
+                        categoryChip(label: label, name: label.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
                     }
                 }
                 .padding(.horizontal, 4)
@@ -202,12 +217,24 @@ struct ShoppingListView: View {
     private func categoryChip(label: ShoppingItem.LabelWrapper?, name: String) -> some View {
         let isSelected = selectedLabel?.id == label?.id
 
+        let color = Color(hex: label?.color)
+        let backgroundColor = isSelected
+            ? (color ?? Color.accentColor).opacity(0.2)
+            : (color ?? Color(.systemGray5))
+        let foregroundColor: Color = {
+            if isSelected {
+                return color?.brightness() ?? 0.5 < 0.5 ? .white : .accentColor
+            } else {
+                return color?.brightness() ?? 0.5 < 0.5 ? .white : .primary
+            }
+        }()
+
         return Text(name)
             .font(.subheadline)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.systemGray5))
-            .foregroundColor(isSelected ? Color.accentColor : .primary)
+            .background(backgroundColor)
+            .foregroundColor(foregroundColor)
             .cornerRadius(20)
             .onTapGesture {
                 selectedLabel = label
