@@ -9,6 +9,11 @@ final class AppSettings: ObservableObject {
         // Initialisiere published-Property aus UserDefaults
         self.selectedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage")
             ?? Locale.current.language.languageCode?.identifier ?? "de"
+        
+        self.showCompletedItems = UserDefaults.standard.object(forKey: "showCompletedItems") as? Bool ?? true
+        
+        let savedLabels = UserDefaults.standard.stringArray(forKey: "collapsedLabels") ?? []
+            self.collapsedLabels = Set(savedLabels)
     }
 
     //  Nur Sprachwechsel ist für SwiftUI relevant → deshalb @Published
@@ -78,6 +83,20 @@ final class AppSettings: ObservableObject {
     }
     
     @Published var showCompleteShoppingButton: Bool = true
+    
+    @Published var showCompletedItems: Bool {
+        didSet {
+            UserDefaults.standard.set(showCompletedItems, forKey: "showCompletedItems")
+        }
+    }
+    
+    @Published var collapsedLabels: Set<String> {
+        didSet {
+            let array = Array(collapsedLabels)
+            UserDefaults.standard.set(array, forKey: "collapsedLabels")
+        }
+    }
+    
 }
 
 

@@ -9,9 +9,7 @@ struct ShoppingListView: View {
     @State private var showSuccessToast = false
     @State private var showArchiveAlert = false
     @State private var keyboardHeight: CGFloat = 0
-    @State private var collapsedCategories: Set<String> = []
     @FocusState private var isInputFocused: Bool
-    @State private var showCompletedItems = true
     
 
     var body: some View {
@@ -83,11 +81,11 @@ struct ShoppingListView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
-                            showCompletedItems.toggle()
+                            settings.showCompletedItems.toggle()
                         }) {
-                            Image(systemName: showCompletedItems ? "eye" : "eye.slash")
+                            Image(systemName: settings.showCompletedItems ? "eye" : "eye.slash")
                         }
-                        .accessibilityLabel(Text(showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
+                        .accessibilityLabel(Text(settings.showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
                     }
                 }
             }
@@ -95,7 +93,7 @@ struct ShoppingListView: View {
     }
 
     private var shoppingListItemsView: some View {
-        let filteredList = viewModel.shoppingList.filter { showCompletedItems || !$0.checked }
+        let filteredList = viewModel.shoppingList.filter { settings.showCompletedItems || !$0.checked }
 
         let grouped = Dictionary(grouping: filteredList) { item in
             item.label?.name ?? LocalizedStringProvider.localized("unlabeled_category")
@@ -115,19 +113,21 @@ struct ShoppingListView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: {
                         withAnimation {
-                            if collapsedCategories.contains(category) {
-                                collapsedCategories.remove(category)
+                            if settings.collapsedLabels.contains(category) {
+                                settings.collapsedLabels.remove(category)
                             } else {
-                                collapsedCategories.insert(category)
+                                settings.collapsedLabels.insert(category)
                             }
                         }
                     }) {
                         HStack {
-                            Text(category.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression)) // hides 1. , 2. , 3. , etc, useful for hidden sorting.
+                            let uncheckedCount = items.filter { !$0.checked }.count
+                            let displayName = category.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression)
+                            Text(uncheckedCount > 0 ? "\(displayName) (\(uncheckedCount))" : displayName)
                                 .font(.headline)
                                 .foregroundColor(fgColor)
                             Spacer()
-                            Image(systemName: collapsedCategories.contains(category) ? "chevron.down" : "chevron.right")
+                            Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.down" : "chevron.right")
                                 .foregroundColor(fgColor.opacity(0.7)) // slightly transparent for the icon
                                 
                         }
@@ -138,7 +138,7 @@ struct ShoppingListView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    if !collapsedCategories.contains(category) {
+                    if !settings.collapsedLabels.contains(category) {
                         let items = grouped[category] ?? []
                         let sortedItems = items
                             .sorted { $0.note?.localizedStandardCompare($1.note ?? "") == .orderedAscending }
