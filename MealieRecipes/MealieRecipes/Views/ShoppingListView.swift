@@ -3,6 +3,7 @@ import Combine
 
 struct ShoppingListView: View {
     @EnvironmentObject private var viewModel: ShoppingListViewModel
+    @EnvironmentObject var settings: AppSettings
     @State private var newItemNote: String = ""
     @State private var selectedLabel: ShoppingItem.LabelWrapper?
     @State private var showSuccessToast = false
@@ -11,6 +12,7 @@ struct ShoppingListView: View {
     @State private var collapsedCategories: Set<String> = []
     @FocusState private var isInputFocused: Bool
     @State private var showCompletedItems = true
+    
 
     var body: some View {
         NavigationStack {
@@ -189,7 +191,7 @@ struct ShoppingListView: View {
             }
 
             // Button nur anzeigen wenn kein Fokus
-            if !isInputFocused {
+            if settings.showCompleteShoppingButton && !isInputFocused {
                 Button {
                     viewModel.archiveList()
                     showArchiveAlert = true

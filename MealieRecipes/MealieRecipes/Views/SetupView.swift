@@ -22,6 +22,8 @@ struct SetupView: View {
     @State private var shoppingLists: [ShoppingList] = []
     @State private var isLoadingShoppingLists = false
     @State private var showResetConfirmation = false
+    
+    @State private var tempShowCompleteShoppingButton: Bool = true
 
     var body: some View {
         NavigationStack {
@@ -115,6 +117,8 @@ struct SetupView: View {
                             InputField(title: "Header 3 Value", text: $optionalHeaderValue3)
                         }
                     }
+                    
+                    Toggle("Show complete shopping button", isOn: $tempShowCompleteShoppingButton) // sorry this will need to be made localizable. 
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(LocalizedStringProvider.localized("language"))
@@ -253,6 +257,7 @@ struct SetupView: View {
         settings.shoppingListId = tempShoppingListId
         settings.selectedLanguage = tempLanguage
         LocalizedStringProvider.overrideLanguage = nil
+        settings.showCompleteShoppingButton = tempShowCompleteShoppingButton
     }
 
     private func loadSettings() {
@@ -269,6 +274,7 @@ struct SetupView: View {
         optionalHeaderValue3 = settings.optionalHeaderValue3
         tempLanguage = settings.selectedLanguage
         LocalizedStringProvider.overrideLanguage = tempLanguage
+        tempShowCompleteShoppingButton = settings.showCompleteShoppingButton
     }
 
     private func resetAppSettings() {

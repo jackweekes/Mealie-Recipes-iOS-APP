@@ -76,6 +76,8 @@ final class AppSettings: ObservableObject {
     var isConfigured: Bool {
         !serverURL.isEmpty && !token.isEmpty && !householdId.isEmpty && !shoppingListId.isEmpty
     }
+    
+    @Published var showCompleteShoppingButton: Bool = true
 }
 
 
