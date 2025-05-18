@@ -110,7 +110,7 @@ struct ShoppingListView: View {
                 let labelColor = items.first?.label?.color
                 let backgroundColor = Color(hex: labelColor) ?? Color(.systemGray)
                 let fgColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
-                let backgroundColorParent = Color(.systemGray6)
+                let backgroundColorParent = Color(.systemGray5)
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: {
                         withAnimation {
@@ -124,7 +124,7 @@ struct ShoppingListView: View {
                         HStack {
                             let uncheckedCount = items.filter { !$0.checked }.count
                             let displayName = category.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression)
-                            HStack(spacing: 6) {
+                            HStack(spacing: 10) {
                                 
                                 Text(displayName)
                                     .font(.subheadline)
@@ -154,7 +154,7 @@ struct ShoppingListView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 10)
                         .background(backgroundColorParent)
-                        .cornerRadius(8)
+                        .cornerRadius(10)
                     }
                     .buttonStyle(PlainButtonStyle())
 
@@ -164,15 +164,27 @@ struct ShoppingListView: View {
                             .sorted { $0.note?.localizedStandardCompare($1.note ?? "") == .orderedAscending }
                             .sorted { !$0.checked && $1.checked } // keeps unchecked first
 
-                        ForEach(sortedItems) { item in
-                            ShoppingListItemView(item: item) {
-                                viewModel.toggleIngredientCompletion(item)
+                        ForEach(sortedItems.indices, id: \.self) { index in
+                                VStack(spacing: 0) {
+                                    ShoppingListItemView(item: sortedItems[index]) {
+                                        viewModel.toggleIngredientCompletion(sortedItems[index])
+                                    }
+                                    
+                                    // Add Divider after every item except the last one
+                                    if index < sortedItems.count - 1 {
+                                        Divider()
+                                            .background(Color(.systemGray4))
+                                            .padding(.leading, 20)
+                                    }
+                                }
                             }
-                        }
                         .onDelete(perform: viewModel.deleteIngredient)
+                        
+                        
                     }
                 }
                 .padding(.vertical, 4)
+                .padding(.horizontal, 20)
             }
         }
         .padding(.bottom)
