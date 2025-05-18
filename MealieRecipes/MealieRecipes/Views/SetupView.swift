@@ -110,18 +110,18 @@ struct SetupView: View {
                     if tempSendOptionalHeaders {
                         Group {
                             InputField(title: "Header 1 Name", text: $optionalHeaderKey1)
-                            InputField(title: "Header 1 Value", text: $optionalHeaderValue1)
+                            SecureFieldView(title: "Header 1 Value", text: $optionalHeaderValue1)
                             InputField(title: "Header 2 Name", text: $optionalHeaderKey2)
-                            InputField(title: "Header 2 Value", text: $optionalHeaderValue2)
+                            SecureFieldView(title: "Header 2 Value", text: $optionalHeaderValue2)
                             InputField(title: "Header 3 Name", text: $optionalHeaderKey3)
-                            InputField(title: "Header 3 Value", text: $optionalHeaderValue3)
+                            SecureFieldView(title: "Header 3 Value", text: $optionalHeaderValue3)
                         }
                     }
                     
                     Toggle(
                         NSLocalizedString("Enable Complete Shopping", comment: "Enable Complete Shopping"),
-                        isOn: $settings.showCompleteShoppingButton
-                    ) // sorry this will need to be made localizable.
+                        isOn: $tempShowCompleteShoppingButton // use temp state, not direct settings binding
+                    )
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(LocalizedStringProvider.localized("language"))
@@ -277,7 +277,8 @@ struct SetupView: View {
         optionalHeaderValue3 = settings.optionalHeaderValue3
         tempLanguage = settings.selectedLanguage
         LocalizedStringProvider.overrideLanguage = tempLanguage
-        tempShowCompleteShoppingButton = settings.showCompleteShoppingButton
+        settings.showCompleteShoppingButton = tempShowCompleteShoppingButton  // update saved setting here
+
     }
 
     private func resetAppSettings() {

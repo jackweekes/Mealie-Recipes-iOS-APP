@@ -145,7 +145,7 @@ struct ShoppingListView: View {
                             HStack(spacing: 10) {
                                 
                                 Text(displayName)
-                                    .font(.subheadline)
+                                    .font(.system(size: 16))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(backgroundColor)
@@ -157,7 +157,7 @@ struct ShoppingListView: View {
                             Spacer()
                             HStack(spacing: 6) {
                                 Text("\(uncheckedCount)")
-                                    .font(.subheadline)
+                                    .font(.system(size: 16))
                                     .frame(minWidth: 30)
                                     .padding(.vertical, 6)
                                     .background(backgroundColorParent)
@@ -205,7 +205,7 @@ struct ShoppingListView: View {
                     }
                 }
                 .padding(.vertical, 4)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 10)
             }
         }
         .padding(.bottom)
@@ -232,17 +232,47 @@ struct ShoppingListView: View {
                 .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
             }
 
-            // Horizontale Kategorieauswahl
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    categoryChip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
-                    ForEach(viewModel.availableLabels.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }, id: \.id) { label in // Sort A-Z
-                        categoryChip(label: label, name: label.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
+            ZStack {
+                // Scrollable chips
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        categoryChip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
+                        ForEach(viewModel.availableLabels.sorted {
+                            $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                        }, id: \.id) { label in
+                            categoryChip(label: label, name: label.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
+                        }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
                 }
-                .padding(.horizontal, 4)
-            }
 
+                // Left fade
+                HStack {
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color(.systemGray5), .clear]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: 20)
+                    Spacer()
+                }
+
+                // Right fade
+                HStack {
+                    Spacer()
+                    LinearGradient(
+                        gradient: Gradient(colors: [.clear, Color(.systemGray5)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: 20)
+                }
+            }
+            .frame(height: 50) // Adjust to match the chip height
+            .clipped()
+            
+            
             // Button nur anzeigen wenn kein Fokus
             if settings.showCompleteShoppingButton && !isInputFocused {
                 Button {
@@ -263,7 +293,7 @@ struct ShoppingListView: View {
                 .transition(.opacity)
             }
         }
-        .padding(.horizontal, padding > 0 ? padding : 16)
+        .padding(.horizontal, 10)
         .padding(.bottom, 12)
         .padding(.top, 12)
         .animation(.easeOut(duration: 0.1), value: keyboardHeight)
@@ -287,21 +317,27 @@ struct ShoppingListView: View {
         let foregroundColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
 
         return HStack(spacing: 8) {
-            Text(name)
-                .font(.subheadline)
-                .fontWeight(.regular)
 
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(foregroundColor)
-                    .font(.system(size: 16))
+                    .font(.subheadline)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
+            Text(name)
+                .font(.subheadline)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(backgroundColor)
         .foregroundColor(foregroundColor)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    isSelected ? foregroundColor : backgroundColor,
+                    lineWidth: 4
+                )
+        )
         .cornerRadius(20)
         .onTapGesture {
             selectedLabel = label
@@ -361,7 +397,7 @@ struct ShoppingListItemView: View {
         .onTapGesture {
             onTap()
         }
-        .onLongPressGesture(minimumDuration: 0.5) {
+        .onLongPressGesture(minimumDuration: 0.3) {
             onLongPress()
         }
     }

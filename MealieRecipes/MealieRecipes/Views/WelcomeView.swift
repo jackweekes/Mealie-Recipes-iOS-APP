@@ -4,7 +4,6 @@ struct WelcomeView: View {
     let settings = AppSettings.shared
     @StateObject private var leftoverViewModel = LeftoverRecipeViewModel()
     
-    // Define grid layout: 2 columns, flexible width
     let columns = [
         GridItem(.flexible(), spacing: 20),
         GridItem(.flexible(), spacing: 20)
@@ -13,7 +12,7 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 30) {
+                VStack(spacing: 20) {
                     Spacer(minLength: 40)
                     
                     Text(LocalizedStringProvider.localized("welcome_title"))
@@ -28,31 +27,31 @@ struct WelcomeView: View {
                     
                     LazyVGrid(columns: columns, spacing: 20) {
                         NavigationLink(destination: RecipeListView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("show_recipes"))
+                            gridButtonLabel(LocalizedStringProvider.localized("show_recipes"), iconName: "book.fill", count: 0)
                         }
                         
                         NavigationLink(destination: ShoppingListView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("shopping_list"))
+                            gridButtonLabel(LocalizedStringProvider.localized("shopping_list"), iconName: "cart.fill", count: 0)
                         }
                         
                         NavigationLink(destination: ArchivedShoppingListsView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("archived_lists"))
+                            gridButtonLabel(LocalizedStringProvider.localized("archived_lists"), iconName: "archivebox.fill", count: 0)
                         }
                         
                         NavigationLink(destination: RecipeUploadView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("recipe_upload"))
+                            gridButtonLabel(LocalizedStringProvider.localized("recipe_upload"), iconName: "plus")
                         }
                         
                         NavigationLink(destination: MealplanView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("meal_plan"))
+                            gridButtonLabel(LocalizedStringProvider.localized("meal_plan"), iconName: "calendar")
                         }
                         
                         NavigationLink(destination: LeftoverRecipeFinderView(viewModel: leftoverViewModel)) {
-                            gridButtonLabel(LocalizedStringProvider.localized("leftover.title"))
+                            gridButtonLabel(LocalizedStringProvider.localized("leftover.title"), iconName: "leaf.fill")
                         }
                         
                         NavigationLink(destination: SetupView(isInitialSetup: false)) {
-                            gridButtonLabel(LocalizedStringProvider.localized("settings"))
+                            gridButtonLabel(LocalizedStringProvider.localized("settings"), iconName: "gearshape.fill")
                         }
                     }
                     .padding(.horizontal)
@@ -87,14 +86,39 @@ struct WelcomeView: View {
         }
     }
     
-    // Extract button style to avoid repetition
-    private func gridButtonLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.headline)
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .background(Color.accentColor)
-            .foregroundColor(.white)
-            .cornerRadius(12)
-            .multilineTextAlignment(.center)
+    private func gridButtonLabel(_ text: String, iconName: String = "star", count: Int? = nil) -> some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray5))
+                .frame(minHeight: 80)
+            
+            VStack {
+                HStack {
+                    Image(systemName: iconName)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundColor(.accentColor)
+                        .padding(15)
+                    
+                    Spacer()
+                    
+                    if let count = count {
+                        Text("\(count)")
+                            .font(.system(size: 26, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .padding(15)
+                    }
+                }
+                
+                Spacer()
+                
+                HStack {
+                    Text(text)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .padding([.leading, .bottom], 15)
+                    Spacer()
+                }
+            }
+        }
     }
 }
