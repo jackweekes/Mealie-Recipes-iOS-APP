@@ -108,8 +108,9 @@ struct ShoppingListView: View {
             ForEach(sortedCategories, id: \.self) { category in
                 let items = grouped[category] ?? []
                 let labelColor = items.first?.label?.color
-                let backgroundColor = Color(hex: labelColor) ?? Color(.systemGray6)
+                let backgroundColor = Color(hex: labelColor) ?? Color(.systemGray)
                 let fgColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
+                let backgroundColorParent = Color(.systemGray6)
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: {
                         withAnimation {
@@ -123,17 +124,36 @@ struct ShoppingListView: View {
                         HStack {
                             let uncheckedCount = items.filter { !$0.checked }.count
                             let displayName = category.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression)
-                            Text(uncheckedCount > 0 ? "\(displayName) (\(uncheckedCount))" : displayName)
-                                .font(.headline)
-                                .foregroundColor(fgColor)
+                            HStack(spacing: 6) {
+                                
+                                Text(displayName)
+                                    .font(.subheadline)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(backgroundColor)
+                                    .foregroundColor(fgColor)
+                                    .cornerRadius(16)
+
+                               
+                            }
                             Spacer()
+                            HStack(spacing: 6) {
+                                Text("\(uncheckedCount)")
+                                    .font(.subheadline)
+                                    .frame(minWidth: 30)
+                                    .padding(.vertical, 6)
+                                    .background(backgroundColorParent)
+                                    .foregroundColor(backgroundColorParent.brightness() < 0.5 ? .white : .black)
+                                    .cornerRadius(16)
+                                }
                             Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.down" : "chevron.right")
-                                .foregroundColor(fgColor.opacity(0.7)) // slightly transparent for the icon
+                                .foregroundColor(backgroundColorParent.brightness() < 0.5 ? .white : .black)
+                                .frame(width: 20, alignment: .trailing) // Fix width to avoid layout shift
                                 
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 10)
-                        .background(backgroundColor)
+                        .background(backgroundColorParent)
                         .cornerRadius(8)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -278,8 +298,8 @@ struct ShoppingListItemView: View {
         Button(action: onTap) {
             HStack {
                 Text(item.note ?? "-")
-                    .font(.system(size: 16))
-                    .fontWeight(.semibold)
+                    .font(.system(size: 14))
+                    .fontWeight(.regular)
                     .strikethrough(item.checked, color: .gray)
                     .foregroundColor(item.checked ? .gray : .primary)
 
