@@ -10,6 +10,8 @@ struct ShoppingListView: View {
     @State private var showArchiveAlert = false
     @State private var keyboardHeight: CGFloat = 0
     @FocusState private var isInputFocused: Bool
+    @State private var itemToDelete: ShoppingItem? = nil
+    @State private var showDeleteConfirmation = false
     
 
     var body: some View {
@@ -40,6 +42,7 @@ struct ShoppingListView: View {
 
                     inputSection(padding: horizontalPadding)
                 }
+
                 .background(Color(.systemGroupedBackground).ignoresSafeArea())
                 .overlay(
                     Group {
@@ -89,6 +92,21 @@ struct ShoppingListView: View {
                     }
                 }
             }
+        }
+        .alert(item: $itemToDelete) { item in
+            Alert(
+                title: Text("Delete Item?"),
+                message: Text("Are you sure you want to delete \"\(item.note ?? "")\"?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    if let index = viewModel.shoppingList.firstIndex(where: { $0.id == item.id }) {
+                        viewModel.deleteIngredient(at: IndexSet(integer: index))
+                    }
+                    itemToDelete = nil
+                },
+                secondaryButton: .cancel {
+                    itemToDelete = nil
+                }
+            )
         }
     }
 
@@ -165,19 +183,22 @@ struct ShoppingListView: View {
                             .sorted { !$0.checked && $1.checked } // keeps unchecked first
 
                         ForEach(sortedItems.indices, id: \.self) { index in
-                                VStack(spacing: 0) {
-                                    ShoppingListItemView(item: sortedItems[index]) {
-                                        viewModel.toggleIngredientCompletion(sortedItems[index])
-                                    }
-                                    
-                                    // Add Divider after every item except the last one
-                                    if index < sortedItems.count - 1 {
-                                        Divider()
-                                            .background(Color(.systemGray4))
-                                            .padding(.leading, 20)
-                                    }
+                            VStack(spacing: 0) {
+                                ShoppingListItemView(item: sortedItems[index], onTap: {
+                                    viewModel.toggleIngredientCompletion(sortedItems[index])
+                                }, onLongPress: {
+                                    itemToDelete = sortedItems[index]
+                                        print("Long press detected for item: \(itemToDelete?.note ?? "nil")")
+                                        showDeleteConfirmation = true
+                                })
+                                
+                                if index < sortedItems.count - 1 {
+                                    Divider()
+                                        .background(Color(.systemGray4))
+                                        .padding(.leading, 10)
                                 }
                             }
+                        }
                         .onDelete(perform: viewModel.deleteIngredient)
                         
                         
@@ -244,35 +265,47 @@ struct ShoppingListView: View {
         }
         .padding(.horizontal, padding > 0 ? padding : 16)
         .padding(.bottom, 12)
+        .padding(.top, 12)
         .animation(.easeOut(duration: 0.1), value: keyboardHeight)
         .animation(.easeInOut, value: isInputFocused)
+        .background(Color(.systemGray5))
     }
 
     private func categoryChip(label: ShoppingItem.LabelWrapper?, name: String) -> some View {
         let isSelected = selectedLabel?.id == label?.id
 
-        let color = Color(hex: label?.color)
-        let backgroundColor = isSelected
-            ? (color ?? Color.accentColor).opacity(0.2)
-            : (color ?? Color(.systemGray5))
-        let foregroundColor: Color = {
-            if isSelected {
-                return color?.brightness() ?? 0.5 < 0.5 ? .white : .accentColor
+        // For unlabeled, set systemGray5 background, otherwise decode hex color
+        let backgroundColor: Color = {
+            if let label = label, let hexColor = Color(hex: label.color) {
+                return hexColor
             } else {
-                return color?.brightness() ?? 0.5 < 0.5 ? .white : .primary
+                return Color(.systemGray) // unlabeled background color
             }
         }()
 
-        return Text(name)
-            .font(.subheadline)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(backgroundColor)
-            .foregroundColor(foregroundColor)
-            .cornerRadius(20)
-            .onTapGesture {
-                selectedLabel = label
+        // Foreground color based on brightness of background
+        let foregroundColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
+
+        return HStack(spacing: 8) {
+            Text(name)
+                .font(.subheadline)
+                .fontWeight(.regular)
+
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(foregroundColor)
+                    .font(.system(size: 16))
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(backgroundColor)
+        .foregroundColor(foregroundColor)
+        .cornerRadius(20)
+        .onTapGesture {
+            selectedLabel = label
+        }
     }
 
     private func addItem() {
@@ -305,27 +338,32 @@ struct ShoppingListView: View {
 struct ShoppingListItemView: View {
     let item: ShoppingItem
     let onTap: () -> Void
+    let onLongPress: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Text(item.note ?? "-")
-                    .font(.system(size: 14))
-                    .fontWeight(.regular)
-                    .strikethrough(item.checked, color: .gray)
-                    .foregroundColor(item.checked ? .gray : .primary)
+        HStack {
+            Text(item.note ?? "-")
+                .font(.system(size: 14))
+                .fontWeight(.regular)
+                .strikethrough(item.checked, color: .gray)
+                .foregroundColor(item.checked ? .gray : .primary)
 
-                Spacer()
+            Spacer()
 
-                Image(systemName: item.checked ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
-                    .foregroundColor(item.checked ? .green : .gray)
-            }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 20)
-            .background(Color(.systemBackground))
+            Image(systemName: item.checked ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 18))
+                .foregroundColor(item.checked ? .green : .gray)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(.vertical, 14)
+        .padding(.horizontal, 20)
+        .background(Color(.systemBackground))
+        .contentShape(Rectangle())  // Make the entire row tappable
+        .onTapGesture {
+            onTap()
+        }
+        .onLongPressGesture(minimumDuration: 0.5) {
+            onLongPress()
+        }
     }
 }
 
