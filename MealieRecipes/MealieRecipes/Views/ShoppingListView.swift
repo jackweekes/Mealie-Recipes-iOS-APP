@@ -393,7 +393,7 @@ struct ShoppingListItemView: View {
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 20)
-        .background(Color(.systemBackground))
+        .background(Color(.systemGroupedBackground))
         .contentShape(Rectangle())  // Make the entire row tappable
         .onTapGesture {
             onTap()
