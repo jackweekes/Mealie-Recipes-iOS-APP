@@ -12,6 +12,7 @@ struct ShoppingListView: View {
     @FocusState private var isInputFocused: Bool
     @State private var itemToDelete: ShoppingItem? = nil
     @State private var showDeleteConfirmation = false
+    @Environment(\.colorScheme) var colorScheme
     
 
     var body: some View {
@@ -145,7 +146,7 @@ struct ShoppingListView: View {
                             HStack(spacing: 10) {
                                 
                                 Text(displayName)
-                                    .font(.system(size: 16))
+                                    .font(.system(size: 14))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(backgroundColor)
@@ -157,7 +158,7 @@ struct ShoppingListView: View {
                             Spacer()
                             HStack(spacing: 6) {
                                 Text("\(uncheckedCount)")
-                                    .font(.system(size: 16))
+                                    .font(.system(size: 14))
                                     .frame(minWidth: 30)
                                     .padding(.vertical, 6)
                                     .background(backgroundColorParent)
@@ -269,7 +270,7 @@ struct ShoppingListView: View {
                     .frame(width: 20)
                 }
             }
-            .frame(height: 50) // Adjust to match the chip height
+            .frame(height: 30) // Adjust to match the chip height
             .clipped()
             
             
@@ -304,7 +305,7 @@ struct ShoppingListView: View {
     private func categoryChip(label: ShoppingItem.LabelWrapper?, name: String) -> some View {
         let isSelected = selectedLabel?.id == label?.id
 
-        // For unlabeled, set systemGray5 background, otherwise decode hex color
+        // For unlabeled, set systemGray background, otherwise decode hex color
         let backgroundColor: Color = {
             if let label = label, let hexColor = Color(hex: label.color) {
                 return hexColor
@@ -334,7 +335,7 @@ struct ShoppingListView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
-                    isSelected ? foregroundColor : backgroundColor,
+                    isSelected ? (colorScheme == .dark ? Color.white : Color.black) : backgroundColor,
                     lineWidth: 4
                 )
         )

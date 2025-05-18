@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct MealieRecipesApp: App {
     @StateObject private var settings = AppSettings.shared
-    @State private var viewModel: ShoppingListViewModel?
+    @StateObject private var viewModel = ShoppingListViewModel()
 
     init() {
         if AppSettings.shared.isConfigured {
@@ -15,21 +15,14 @@ struct MealieRecipesApp: App {
         WindowGroup {
             Group {
                 if settings.isConfigured {
-                    if let viewModel = viewModel {
-                        WelcomeView()
-                            .environmentObject(viewModel)
-                    } else {
-                        WelcomeView()
-                            .onAppear {
-                                self.viewModel = ShoppingListViewModel()
-                            }
-                    }
+                    WelcomeView()
+                        .environmentObject(viewModel)
                 } else {
                     SetupView()
                 }
             }
             .environmentObject(settings)
-            .id(settings.selectedLanguage) // ✅ erzwingt Rebuild bei Sprachwechsel
+            .id(settings.selectedLanguage)
         }
     }
 }

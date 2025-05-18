@@ -154,7 +154,9 @@ class ShoppingListViewModel: ObservableObject {
         }
     }
 
-
+    var uncheckedItemCount: Int {
+        shoppingList.filter { !$0.checked }.count
+    }
 
     // MARK: - Mengenbereinigung
 

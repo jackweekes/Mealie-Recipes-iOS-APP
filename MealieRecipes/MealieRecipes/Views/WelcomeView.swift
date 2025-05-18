@@ -3,6 +3,7 @@ import SwiftUI
 struct WelcomeView: View {
     let settings = AppSettings.shared
     @StateObject private var leftoverViewModel = LeftoverRecipeViewModel()
+    @EnvironmentObject var shoppingListViewModel: ShoppingListViewModel
     
     let columns = [
         GridItem(.flexible(), spacing: 20),
@@ -31,7 +32,7 @@ struct WelcomeView: View {
                         }
                         
                         NavigationLink(destination: ShoppingListView()) {
-                            gridButtonLabel(LocalizedStringProvider.localized("shopping_list"), iconName: "cart.fill", count: 0)
+                            gridButtonLabel(LocalizedStringProvider.localized("shopping_list"), iconName: "cart.fill", count: shoppingListViewModel.uncheckedItemCount)
                         }
                         
                         NavigationLink(destination: ArchivedShoppingListsView()) {
