@@ -480,6 +480,7 @@ struct EditShoppingItemView: View {
                 Section(header: Text("Label")) {
                     LabelChipSelector(selectedLabel: $label, availableLabels: availableLabels, colorScheme: colorScheme)
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 
             }
             .navigationTitle("Edit Item")
