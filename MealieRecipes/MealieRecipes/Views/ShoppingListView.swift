@@ -16,7 +16,6 @@ struct ShoppingListView: View {
     @State private var editingItem: ShoppingItem? = nil
     @State private var editedNote: String = ""
     @State private var editedLabel: ShoppingItem.LabelWrapper? = nil
-    @State private var showEditSheet = false
     
 
     var body: some View {
@@ -98,22 +97,27 @@ struct ShoppingListView: View {
                 }
             }
         }
-        .sheet(isPresented: $showEditSheet) {
-            if let item = editingItem {
-                EditShoppingItemView(
-                    item: item,
-                    note: $editedNote,
-                    label: $editedLabel,
-                    onSave: {
-                        viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel)
-                        showEditSheet = false
-                    },
-                    onCancel: {
-                        showEditSheet = false
-                    },
-                    availableLabels: viewModel.availableLabels
-                )
-            }
+        .sheet(item: $editingItem) { item in
+            EditShoppingItemView(
+                item: item,
+                note: $editedNote,
+                label: $editedLabel,
+                onSave: {
+                    viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel)
+                    editingItem = nil
+                },
+                onCancel: {
+                    editingItem = nil
+                },
+                onDelete: {
+                    editingItem = nil
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        itemToDelete = item
+                    }
+                },
+                availableLabels: viewModel.availableLabels
+            )
         }
         .alert(item: $itemToDelete) { item in
             Alert(
@@ -204,25 +208,26 @@ struct ShoppingListView: View {
                             .sorted { $0.note?.localizedStandardCompare($1.note ?? "") == .orderedAscending }
                             .sorted { !$0.checked && $1.checked } // keeps unchecked first
 
-                        ForEach(sortedItems.indices, id: \.self) { index in
+                        ForEach(sortedItems, id: \.id) { item in
                             VStack(spacing: 0) {
-                                ShoppingListItemView(item: sortedItems[index], onTap: {
-                                    viewModel.toggleIngredientCompletion(sortedItems[index])
+                                ShoppingListItemView(item: item, onTap: {
+                                    viewModel.toggleIngredientCompletion(item)
                                 }, onLongPress: {
-                                    editingItem = sortedItems[index]
-                                    editedNote = sortedItems[index].note ?? ""
-                                    editedLabel = sortedItems[index].label
-                                    showEditSheet = true
+                                    editingItem = item
+                                    editedNote = item.note ?? ""
+                                    editedLabel = item.label
                                 })
-                                
-                                if index < sortedItems.count - 1 {
+
+                                if item.id != sortedItems.last?.id {
                                     Divider()
                                         .background(Color(.systemGray4))
                                         .padding(.leading, 10)
                                 }
                             }
                         }
-                        .onDelete(perform: viewModel.deleteIngredient)
+                        .onDelete { indexSet in
+                            viewModel.deleteIngredient(at: indexSet)
+                        }
                         
                         
                     }
@@ -458,6 +463,7 @@ struct EditShoppingItemView: View {
     @Binding var label: ShoppingItem.LabelWrapper?
     var onSave: () -> Void
     var onCancel: () -> Void
+    var onDelete: () -> Void
     let availableLabels: [ShoppingItem.LabelWrapper]
 
     @Environment(\.colorScheme) var colorScheme
@@ -495,6 +501,14 @@ struct EditShoppingItemView: View {
                         onCancel()
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(role: .destructive) {
+                            onDelete()
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .tint(.red)
+                    }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         onSave()
@@ -503,6 +517,7 @@ struct EditShoppingItemView: View {
             }
         }
     }
+    
 }
 
 // MARK: - Keyboard Height Publisher
