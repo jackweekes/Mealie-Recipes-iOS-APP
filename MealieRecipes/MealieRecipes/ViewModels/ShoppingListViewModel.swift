@@ -140,6 +140,17 @@ class ShoppingListViewModel: ObservableObject {
     func deleteAllArchivedLists() {
         archivedLists = []
     }
+    
+    func updateIngredient(item: ShoppingItem, newNote: String, newLabel: ShoppingItem.LabelWrapper?) {
+        guard let index = shoppingList.firstIndex(where: { $0.id == item.id }) else { return }
+
+        shoppingList[index].note = newNote
+        shoppingList[index].label = newLabel
+
+        Task {
+            await updateIngredientOnServer(item: shoppingList[index])
+        }
+    }
 
     // MARK: - Mealie Sync
 
@@ -179,4 +190,10 @@ private func extractLabelsFromItems(_ items: [ShoppingItem]) -> [ShoppingItem.La
     return unique.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
 }
 
-
+private func updateIngredientOnServer(item: ShoppingItem) async {
+    do {
+        try await APIService.shared.updateShoppingItem(item)
+    } catch {
+        print("❌ Fehler beim Synchronisieren mit dem Server: \(error.localizedDescription)")
+    }
+}

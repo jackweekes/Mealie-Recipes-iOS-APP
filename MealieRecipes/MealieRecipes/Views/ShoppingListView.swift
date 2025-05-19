@@ -13,6 +13,10 @@ struct ShoppingListView: View {
     @State private var itemToDelete: ShoppingItem? = nil
     @State private var showDeleteConfirmation = false
     @Environment(\.colorScheme) var colorScheme
+    @State private var editingItem: ShoppingItem? = nil
+    @State private var editedNote: String = ""
+    @State private var editedLabel: ShoppingItem.LabelWrapper? = nil
+    @State private var showEditSheet = false
     
 
     var body: some View {
@@ -92,6 +96,23 @@ struct ShoppingListView: View {
                         .accessibilityLabel(Text(settings.showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            if let item = editingItem {
+                EditShoppingItemView(
+                    item: item,
+                    note: $editedNote,
+                    label: $editedLabel,
+                    onSave: {
+                        viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel)
+                        showEditSheet = false
+                    },
+                    onCancel: {
+                        showEditSheet = false
+                    },
+                    availableLabels: viewModel.availableLabels
+                )
             }
         }
         .alert(item: $itemToDelete) { item in
@@ -188,9 +209,10 @@ struct ShoppingListView: View {
                                 ShoppingListItemView(item: sortedItems[index], onTap: {
                                     viewModel.toggleIngredientCompletion(sortedItems[index])
                                 }, onLongPress: {
-                                    itemToDelete = sortedItems[index]
-                                        print("Long press detected for item: \(itemToDelete?.note ?? "nil")")
-                                        showDeleteConfirmation = true
+                                    editingItem = sortedItems[index]
+                                    editedNote = sortedItems[index].note ?? ""
+                                    editedLabel = sortedItems[index].label
+                                    showEditSheet = true
                                 })
                                 
                                 if index < sortedItems.count - 1 {
@@ -427,6 +449,59 @@ struct EmptyListView: View {
         }
         .frame(maxWidth: .infinity)
         Spacer()
+    }
+}
+
+struct EditShoppingItemView: View {
+    let item: ShoppingItem
+    @Binding var note: String
+    @Binding var label: ShoppingItem.LabelWrapper?
+    var onSave: () -> Void
+    var onCancel: () -> Void
+    let availableLabels: [ShoppingItem.LabelWrapper]
+
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Item")) {
+                    TextField("Note", text: $note)
+                }
+
+                Section(header: Text("Label")) {
+                    Picker("Label", selection: Binding(
+                        get: { label?.id },
+                        set: { newValue in
+                            label = availableLabels.first(where: { $0.id == newValue })
+                        }
+                    )) {
+                        Text("Unlabeled").tag(UUID?.none)
+                        
+                        ForEach(availableLabels.sorted(by: {
+                            $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                        }), id: \.id) { lbl in
+                            Text(lbl.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
+                                .tag(Optional(lbl.id))
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Edit Item")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        onSave()
+                    }
+                }
+            }
+        }
     }
 }
 
