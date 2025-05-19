@@ -394,10 +394,8 @@ struct ShoppingListItemView: View {
     let item: ShoppingItem
     let onTap: () -> Void
     let onLongPress: () -> Void
-    
 
     @State private var isPressed = false
-    @State private var longPressTriggered = false
 
     var body: some View {
         HStack {
@@ -422,27 +420,16 @@ struct ShoppingListItemView: View {
         )
         .contentShape(Rectangle())
         .cornerRadius(10)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    isPressed = true
-                    longPressTriggered = false
-                }
-                .onEnded { _ in
-                    isPressed = false
-                    if !longPressTriggered {
-                        onTap()
-                    }
-                }
-        )
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.3)
-                .onEnded { _ in
-                    isPressed = false
-                    longPressTriggered = true
-                    onLongPress()
-                }
-        )
+        // Handle tap
+        .onTapGesture {
+            onTap()
+        }
+        // Handle long press and update isPressed during press
+        .onLongPressGesture(minimumDuration: 0.25, pressing: { pressing in
+            isPressed = pressing
+        }) {
+            onLongPress()
+        }
     }
 }
 
