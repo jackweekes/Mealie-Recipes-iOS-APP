@@ -243,11 +243,12 @@ struct ShoppingListView: View {
         VStack(spacing: 12) {
             HStack {
                 TextField(LocalizedStringProvider.localized("add_item_placeholder"), text: $newItemNote)
-                    .padding(14)
+                    .padding(10)
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
                     .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
                     .focused($isInputFocused)
+                    .font(.subheadline)
                     .onSubmit {
                         addItem()
                     }
@@ -262,18 +263,7 @@ struct ShoppingListView: View {
 
             ZStack {
                 // Scrollable chips
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        categoryChip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
-                        ForEach(viewModel.availableLabels.sorted {
-                            $0.name.localizedStandardCompare($1.name) == .orderedAscending
-                        }, id: \.id) { label in
-                            categoryChip(label: label, name: label.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                }
+                LabelChipSelector(selectedLabel: $selectedLabel, availableLabels: viewModel.availableLabels, colorScheme: colorScheme)
 
                 // Left fade
                 HStack {
@@ -382,7 +372,7 @@ struct ShoppingListView: View {
         isInputFocused = true
 
         withAnimation {
-            showSuccessToast = true
+            isInputFocused = false
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -476,21 +466,7 @@ struct EditShoppingItemView: View {
                 }
 
                 Section(header: Text("Label")) {
-                    Picker("Label", selection: Binding(
-                        get: { label?.id },
-                        set: { newValue in
-                            label = availableLabels.first(where: { $0.id == newValue })
-                        }
-                    )) {
-                        Text("Unlabeled").tag(UUID?.none)
-                        
-                        ForEach(availableLabels.sorted(by: {
-                            $0.name.localizedStandardCompare($1.name) == .orderedAscending
-                        }), id: \.id) { lbl in
-                            Text(lbl.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
-                                .tag(Optional(lbl.id))
-                        }
-                    }
+                    LabelChipSelector(selectedLabel: $label, availableLabels: availableLabels, colorScheme: colorScheme)
                 }
             }
             .navigationTitle("Edit Item")
@@ -518,6 +494,72 @@ struct EditShoppingItemView: View {
         }
     }
     
+}
+
+struct LabelChipSelector: View {
+    @Binding var selectedLabel: ShoppingItem.LabelWrapper?
+    var availableLabels: [ShoppingItem.LabelWrapper]
+    var colorScheme: ColorScheme
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(label: nil, name: LocalizedStringProvider.localized("unlabeled_category"))
+
+                ForEach(availableLabels.sorted {
+                    $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                }, id: \.id) { label in
+                    chip(label: label, name: label.name.replacingOccurrences(of: #"^\d+\.\s*"#, with: "", options: .regularExpression))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+        }
+        .frame(height: 30)
+        .clipped()
+    }
+
+    @ViewBuilder
+    private func chip(label: ShoppingItem.LabelWrapper?, name: String) -> some View {
+        let isSelected = selectedLabel?.id == label?.id
+        let backgroundColor: Color = {
+            if let label = label, let hexColor = Color(hex: label.color) {
+                return hexColor
+            } else {
+                return Color(.systemGray)
+            }
+        }()
+
+        let foregroundColor: Color = backgroundColor.brightness() < 0.5 ? .white : .black
+
+        HStack(spacing: 8) {
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(foregroundColor)
+                    .font(.subheadline)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+            Text(name)
+                .font(.subheadline)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(backgroundColor)
+        .foregroundColor(foregroundColor)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    isSelected ? (colorScheme == .dark ? Color.white : Color.black) : backgroundColor,
+                    lineWidth: 4
+                )
+        )
+        .cornerRadius(20)
+        .onTapGesture {
+            withAnimation {
+                selectedLabel = label
+            }
+        }
+    }
 }
 
 // MARK: - Keyboard Height Publisher
