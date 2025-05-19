@@ -186,11 +186,12 @@ struct ShoppingListView: View {
                                     .font(.system(size: 14))
                                     .frame(minWidth: 30)
                                     .padding(.vertical, 6)
-                                    .background(backgroundColorParent)
+                                    //.background(backgroundColorParent)
+                                    .background(Color(.systemGroupedBackground))
                                     .foregroundColor(backgroundColorParent.brightness() < 0.5 ? .white : .black)
                                     .cornerRadius(16)
                                 }
-                            Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.down" : "chevron.right")
+                            Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.right" : "chevron.down")
                                 .foregroundColor(backgroundColorParent.brightness() < 0.5 ? .white : .black)
                                 .frame(width: 20, alignment: .trailing) // Fix width to avoid layout shift
                                 
@@ -198,6 +199,7 @@ struct ShoppingListView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 10)
                         .background(backgroundColorParent)
+                        //.background(Color(.systemGroupedBackground))
                         .cornerRadius(10)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -394,6 +396,8 @@ struct ShoppingListItemView: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
 
+    @State private var isPressed = false
+
     var body: some View {
         HStack {
             Text(item.note ?? "-")
@@ -410,14 +414,25 @@ struct ShoppingListItemView: View {
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 20)
-        .background(Color(.systemGroupedBackground))
-        .contentShape(Rectangle())  // Make the entire row tappable
-        .onTapGesture {
-            onTap()
-        }
-        .onLongPressGesture(minimumDuration: 0.3) {
-            onLongPress()
-        }
+        .background(isPressed ? Color(.systemGray5) : Color(.systemGroupedBackground))
+        .contentShape(Rectangle())
+        .cornerRadius(10)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                    onTap()
+                }
+        )
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.3)
+                .onEnded { _ in
+                    onLongPress()
+                }
+        )
     }
 }
 
