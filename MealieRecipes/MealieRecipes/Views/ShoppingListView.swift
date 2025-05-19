@@ -394,8 +394,10 @@ struct ShoppingListItemView: View {
     let item: ShoppingItem
     let onTap: () -> Void
     let onLongPress: () -> Void
+    
 
     @State private var isPressed = false
+    @State private var longPressTriggered = false
 
     var body: some View {
         HStack {
@@ -413,22 +415,31 @@ struct ShoppingListItemView: View {
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 20)
-        .background(isPressed ? Color(.systemGray5) : Color(.systemGroupedBackground))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isPressed ? Color(.systemGray5) : Color(.systemGroupedBackground))
+                .padding(8)
+        )
         .contentShape(Rectangle())
         .cornerRadius(10)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
                     isPressed = true
+                    longPressTriggered = false
                 }
                 .onEnded { _ in
                     isPressed = false
-                    onTap()
+                    if !longPressTriggered {
+                        onTap()
+                    }
                 }
         )
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.3)
                 .onEnded { _ in
+                    isPressed = false
+                    longPressTriggered = true
                     onLongPress()
                 }
         )
@@ -482,6 +493,7 @@ struct EditShoppingItemView: View {
                 Section(header: Text("Label")) {
                     LabelChipSelector(selectedLabel: $label, availableLabels: availableLabels, colorScheme: colorScheme)
                 }
+                
             }
             .navigationTitle("Edit Item")
             .navigationBarTitleDisplayMode(.inline)
