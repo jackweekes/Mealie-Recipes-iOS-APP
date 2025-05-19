@@ -191,7 +191,6 @@ struct ShoppingListView: View {
                                     .cornerRadius(16)
                                 }
                             Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.right" : "chevron.down")
-                            Image(systemName: settings.collapsedLabels.contains(category) ? "chevron.right" : "chevron.down")
                                 .foregroundColor(backgroundColorParent.brightness() < 0.5 ? .white : .black)
                                 .frame(width: 20, alignment: .trailing) // Fix width to avoid layout shift
                                 
