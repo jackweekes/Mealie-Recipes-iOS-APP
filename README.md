@@ -1,18 +1,11 @@
-# Mealie Yellow for iOS
+# Yellow Plate
 
-A native SwiftUI app for iOS and iPadOS that connects to your self-hosted Mealie server.  
+A native SwiftUI app for iOS, iPadOS and macOS app that connects to your self-hosted Mealie server.  
 Browse recipes, manage your shopping list, upload new recipes – now with image and URL import powered by OpenAI – all fully integrated via the Mealie API.  
 
 ---
 
 Forked from [Walfrosch92/Mealie-Recipes-iOS-APP](https://github.com/Walfrosch92/Mealie-Recipes-iOS-APP)! If you like this project, consider [supporting Walfrosch92 on Buy Me a Coffee](https://buymeacoffee.com/walfrosch92).
-
----
-
-## Mealie iOS App (Community Project)
-
-A native iOS app built with SwiftUI to connect to your self-hosted [Mealie](https://github.com/mealie-recipes/mealie) server via the official API.  
-Designed for iPhone and iPad, this app brings recipe management, shopping lists, and smart uploads to your fingertips.  
 
 ---
 
@@ -52,25 +45,9 @@ Designed for iPhone and iPad, this app brings recipe management, shopping lists,
 
 ---
 
-## Contributing
-
-This project is open to the community! If you’re interested in testing, improving features, or contributing code, feel free to open an issue or pull request.  
-Whether you're a Swift developer or just love Mealie – your feedback and support are welcome!
-
----
-
-## Roadmap
-
-- [ ] Offline mode  
-- [ ] Caching for recipes and shopping list  
-- [x] **Recipe upload support** (Text, Image & URL – powered by OpenAI)  
-- [x] Multi-language support (German & English)
-
----
-
 ## Requirements
 
-- iOS 16+  
+- iOS 17+  
 - A running Mealie server (tested with API v2.8.0)
 
 ---
