@@ -1,4 +1,4 @@
-# Yellow Plate
+# Yellow Plate (for Mealie)
 
 A native SwiftUI app for iOS, iPadOS and macOS app that connects to your self-hosted Mealie server.  
 Browse recipes, manage your shopping list, upload new recipes – now with image and URL import powered by OpenAI – all fully integrated via the Mealie API.  
