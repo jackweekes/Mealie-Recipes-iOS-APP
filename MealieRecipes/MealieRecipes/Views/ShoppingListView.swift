@@ -367,18 +367,24 @@ struct ShoppingListView: View {
         let trimmed = newItemNote.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
 
-        viewModel.addManualIngredient(note: trimmed, label: selectedLabel)
-        newItemNote = ""
-        selectedLabel = nil
-        isInputFocused = true
+        Task {
+            await viewModel.addManualIngredient(note: trimmed, label: selectedLabel)
 
-        withAnimation {
+            newItemNote = ""
+            selectedLabel = nil
             isInputFocused = false
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            await viewModel.loadShoppingListFromServer()
+            await viewModel.loadLabels()
+
             withAnimation {
-                showSuccessToast = false
+                showSuccessToast = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation {
+                    showSuccessToast = false
+                }
             }
         }
     }
@@ -386,6 +392,8 @@ struct ShoppingListView: View {
     private func configureAPIIfNeeded() {
         // Optional: Header oder Auth konfigurieren
     }
+    
+
 }
 
 // MARK: - Unteransichten
@@ -568,12 +576,10 @@ struct LabelChipSelector: View {
         .foregroundColor(foregroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    isSelected ? (colorScheme == .dark ? Color.white : Color.black) : backgroundColor,
-                    lineWidth: 4
-                )
+                .stroke(isSelected ? Color.accentColor : backgroundColor, lineWidth: 4)
         )
-        .cornerRadius(20)
+        .clipShape(RoundedRectangle(cornerRadius: 20))  // Ensures corners match
+        .contentShape(RoundedRectangle(cornerRadius: 20)) // Improves tap behavior
         .onTapGesture {
             withAnimation {
                 selectedLabel = label

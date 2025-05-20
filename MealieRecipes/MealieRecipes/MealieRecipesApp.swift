@@ -22,6 +22,7 @@ struct MealieRecipesApp: App {
                 }
             }
             .environmentObject(settings)
+            .environmentObject(viewModel)
             .id(settings.selectedLanguage)
         }
     }

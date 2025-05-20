@@ -12,6 +12,7 @@ class ShoppingListViewModel: ObservableObject {
         print("🛒 ShoppingListViewModel initialisiert")
         Task {
             await loadShoppingListFromServer()
+            await loadLabels()
         }
     }
 
@@ -49,18 +50,16 @@ class ShoppingListViewModel: ObservableObject {
         }
         shoppingList.remove(atOffsets: offsets)
     }
-
-    func addManualIngredient(note: String, label: ShoppingItem.LabelWrapper?) {
-        Task {
-            do {
-                var item = try await APIService.shared.addShoppingItem(note: note, labelId: label?.id)
-                item.label = label // falls Mealie label nicht mitsendet
-                DispatchQueue.main.async {
-                    self.shoppingList.append(item)
-                }
-            } catch {
-                print("❌ Fehler beim Hinzufügen: \(error)")
-            }
+    
+    
+    func addManualIngredient(note: String, label: ShoppingItem.LabelWrapper?) async {
+        do {
+            var item = try await APIService.shared.addShoppingItem(note: note, labelId: label?.id)
+            item.label = label
+            shoppingList.append(item)
+            print("🛒 Added item, total count now: \(shoppingList.count)")
+        } catch {
+            print("❌ Fehler beim Hinzufügen: \(error)")
         }
     }
 
@@ -153,12 +152,13 @@ class ShoppingListViewModel: ObservableObject {
     }
 
     // MARK: - Mealie Sync
-
+    @MainActor
     func loadShoppingListFromServer() async {
         do {
             let items = try await APIService.shared.fetchShoppingListItems()
             self.shoppingList = items
-            self.availableLabels = extractLabelsFromItems(items)
+            // pulling the labels from a seperate API call instead so they all show
+            //self.availableLabels = extractLabelsFromItems(items)
             print("✅ Einkaufsliste geladen: \(items.count) Einträge")
         } catch {
             print("❌ Fehler beim Laden der Einkaufsliste von Mealie: \(error.localizedDescription)")
@@ -183,12 +183,12 @@ class ShoppingListViewModel: ObservableObject {
         return rawNote
     }
 }
-
+/*
 private func extractLabelsFromItems(_ items: [ShoppingItem]) -> [ShoppingItem.LabelWrapper] {
     let labels = items.compactMap { $0.label }
     let unique = Array(Set(labels)) 
     return unique.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-}
+}*/
 
 private func updateIngredientOnServer(item: ShoppingItem) async {
     do {
