@@ -473,14 +473,20 @@ struct EditShoppingItemView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Item")) {
+                Section(header: Text("Item Name")) {
                     TextField("Note", text: $note)
                 }
 
-                Section(header: Text("Label")) {
-                    LabelChipSelector(selectedLabel: $label, availableLabels: availableLabels, colorScheme: colorScheme)
+                Section(header: Text("Item Label")) {
+                    LabelChipSelector(
+                        selectedLabel: $label,
+                        availableLabels: availableLabels,
+                        colorScheme: colorScheme
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 0) // reduced custom padding
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)) // remove default insets
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 
             }
             .navigationTitle("Edit Item")

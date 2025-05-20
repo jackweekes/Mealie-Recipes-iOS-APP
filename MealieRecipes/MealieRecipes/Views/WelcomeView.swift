@@ -16,11 +16,11 @@ struct WelcomeView: View {
                     VStack(spacing: 20) {
                         Spacer(minLength: 40)
                         
-                        Text(LocalizedStringProvider.localized("welcome_title"))
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
+                        //Text(LocalizedStringProvider.localized("welcome_title"))
+                         //   .font(.largeTitle)
+                         //   .fontWeight(.bold)
+                         //   .multilineTextAlignment(.center)
+                         //   .padding(.horizontal)
 
                         LazyVGrid(columns: columns, spacing: 20) {
                             NavigationLink(destination: RecipeListView()) {

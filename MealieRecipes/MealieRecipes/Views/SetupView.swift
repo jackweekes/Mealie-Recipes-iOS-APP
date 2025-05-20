@@ -277,7 +277,7 @@ struct SetupView: View {
         optionalHeaderValue3 = settings.optionalHeaderValue3
         tempLanguage = settings.selectedLanguage
         LocalizedStringProvider.overrideLanguage = tempLanguage
-        settings.showCompleteShoppingButton = tempShowCompleteShoppingButton  // update saved setting here
+        tempShowCompleteShoppingButton = settings.showCompleteShoppingButton
 
     }
 
