@@ -438,6 +438,14 @@ struct ShoppingListItemView: View {
         }) {
             onLongPress()
         }
+        .contextMenu { // right click support of macOS
+            Button(action: {
+                onLongPress()
+            }) {
+                Text("Edit Item")
+                Image(systemName: "pencil")
+            }
+        }
     }
 }
 
