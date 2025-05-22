@@ -97,6 +97,7 @@ struct ShoppingListView: View {
                 }
             }
         }
+        
         .sheet(item: $editingItem) { item in
             EditShoppingItemView(
                 item: item,
@@ -436,7 +437,7 @@ struct ShoppingListItemView: View {
         .onLongPressGesture(minimumDuration: 0.25, pressing: { pressing in
             isPressed = pressing
         }) {
-            onLongPress()
+            //onLongPress()
         }
         .contextMenu { // right click support of macOS
             Button(action: {
