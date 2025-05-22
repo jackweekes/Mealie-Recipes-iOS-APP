@@ -433,12 +433,6 @@ struct ShoppingListItemView: View {
         .onTapGesture {
             onTap()
         }
-        // Handle long press and update isPressed during press
-        .onLongPressGesture(minimumDuration: 0.25, pressing: { pressing in
-            isPressed = pressing
-        }) {
-            //onLongPress()
-        }
         .contextMenu { // right click support of macOS
             Button(action: {
                 onLongPress()
@@ -447,6 +441,14 @@ struct ShoppingListItemView: View {
                 Image(systemName: "pencil")
             }
         }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button {
+                        onLongPress()
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                }
     }
 }
 

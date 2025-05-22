@@ -35,6 +35,21 @@ struct SetupView: View {
                             .textContentType(.URL)
 
                         SecureFieldView(title: "Token", text: $tempToken)
+                        
+                        Toggle(LocalizedStringProvider.localized("send_optional_headers"), isOn: $tempSendOptionalHeaders)
+
+                        if tempSendOptionalHeaders {
+                            Group {
+                                InputField(title: "Header 1 Name", text: $optionalHeaderKey1)
+                                SecureFieldView(title: "Header 1 Value", text: $optionalHeaderValue1)
+                                InputField(title: "Header 2 Name", text: $optionalHeaderKey2)
+                                SecureFieldView(title: "Header 2 Value", text: $optionalHeaderValue2)
+                                InputField(title: "Header 3 Name", text: $optionalHeaderKey3)
+                                SecureFieldView(title: "Header 3 Value", text: $optionalHeaderValue3)
+                            }
+                        }
+                        
+                        
                         InputField(title: "Household", text: $tempHouseholdId)
                     }
 
@@ -104,23 +119,9 @@ struct SetupView: View {
                                 .foregroundColor(.gray)
                         }
                     }
-
-                    Toggle(LocalizedStringProvider.localized("send_optional_headers"), isOn: $tempSendOptionalHeaders)
-
-                    if tempSendOptionalHeaders {
-                        Group {
-                            InputField(title: "Header 1 Name", text: $optionalHeaderKey1)
-                            SecureFieldView(title: "Header 1 Value", text: $optionalHeaderValue1)
-                            InputField(title: "Header 2 Name", text: $optionalHeaderKey2)
-                            SecureFieldView(title: "Header 2 Value", text: $optionalHeaderValue2)
-                            InputField(title: "Header 3 Name", text: $optionalHeaderKey3)
-                            SecureFieldView(title: "Header 3 Value", text: $optionalHeaderValue3)
-                        }
-                    }
-                    
                     Toggle(
                         NSLocalizedString("Enable Complete Shopping", comment: "Enable Complete Shopping"),
-                        isOn: $tempShowCompleteShoppingButton // use temp state, not direct settings binding
+                        isOn: $tempShowCompleteShoppingButton
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -188,8 +189,44 @@ struct SetupView: View {
                                 .cornerRadius(12)
                         }
                     }
+
+                    // About section
+                    GroupBox(label: Label("About", systemImage: "info.circle")) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("This app is forked by")
+
+                            Button(action: {
+                                if let url = URL(string: "https://github.com/jackweekes/Yellow-Plate-for-Mealie-iOS-iPadOS-macOS") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                Text("jackweekes/Yellow-Plate-for-Mealie-iOS-iPadOS-macOS")
+                                    .foregroundColor(.blue)
+                                    .underline()
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            Text("from")
+
+                            Button(action: {
+                                if let url = URL(string: "https://github.com/Walfrosch92/Mealie-Recipes-iOS-APP") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                Text("Walfrosch92/Mealie-Recipes-iOS-APP")
+                                    .foregroundColor(.blue)
+                                    .underline()
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            Text("and is licensed under the MIT License.")
+                        }
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    }
+                    .padding(.top)
                 }
-                .padding()
+                .padding() // Global padding for entire VStack inside ScrollView
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(isInitialSetup
@@ -278,7 +315,6 @@ struct SetupView: View {
         tempLanguage = settings.selectedLanguage
         LocalizedStringProvider.overrideLanguage = tempLanguage
         tempShowCompleteShoppingButton = settings.showCompleteShoppingButton
-
     }
 
     private func resetAppSettings() {
