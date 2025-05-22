@@ -5,9 +5,9 @@ struct ShoppingItem: Identifiable, Codable {
     var note: String?
     var checked: Bool
     var shoppingListId: String
-    var label: LabelWrapper? 
+    var label: LabelWrapper?
+    var quantity: Double?  
 
-    // Abgeleitete Kategorie für Gruppierung
     var category: String? {
         label?.name
     }
@@ -18,6 +18,7 @@ struct ShoppingItem: Identifiable, Codable {
         case checked
         case shoppingListId
         case label
+        case quantity 
     }
 
     struct LabelWrapper: Codable, Hashable {

@@ -140,11 +140,12 @@ class ShoppingListViewModel: ObservableObject {
         archivedLists = []
     }
     
-    func updateIngredient(item: ShoppingItem, newNote: String, newLabel: ShoppingItem.LabelWrapper?) {
+    func updateIngredient(item: ShoppingItem, newNote: String, newLabel: ShoppingItem.LabelWrapper?, newQuantity: Double?) {
         guard let index = shoppingList.firstIndex(where: { $0.id == item.id }) else { return }
 
         shoppingList[index].note = newNote
         shoppingList[index].label = newLabel
+        shoppingList[index].quantity = newQuantity
 
         Task {
             await updateIngredientOnServer(item: shoppingList[index])

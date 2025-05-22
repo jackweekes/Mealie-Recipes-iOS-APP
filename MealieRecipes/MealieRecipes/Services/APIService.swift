@@ -215,6 +215,7 @@ class APIService {
             let shoppingListId: String
             let checked: Bool
             let labelId: String?
+            let quantity: Double?
         }
 
         let payload = Payload(
@@ -222,7 +223,8 @@ class APIService {
             note: item.note ?? "",
             shoppingListId: item.shoppingListId,
             checked: item.checked,
-            labelId: item.label?.id
+            labelId: item.label?.id,
+            quantity: item.quantity
         )
 
         let body = try JSONEncoder().encode(payload)

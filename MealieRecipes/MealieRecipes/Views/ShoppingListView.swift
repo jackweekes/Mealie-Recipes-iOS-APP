@@ -16,6 +16,7 @@ struct ShoppingListView: View {
     @State private var editingItem: ShoppingItem? = nil
     @State private var editedNote: String = ""
     @State private var editedLabel: ShoppingItem.LabelWrapper? = nil
+    @State private var editedQuantity: Double? = nil
     
 
     var body: some View {
@@ -85,16 +86,17 @@ struct ShoppingListView: View {
                 }
                 .navigationTitle(" \(LocalizedStringProvider.localized("shopping_list"))")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            settings.showCompletedItems.toggle()
-                        }) {
-                            Image(systemName: settings.showCompletedItems ? "eye" : "eye.slash")
-                        }
-                        .accessibilityLabel(Text(settings.showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
-                    }
+                
                 }
+            }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    settings.showCompletedItems.toggle()
+                }) {
+                    Image(systemName: settings.showCompletedItems ? "eye" : "eye.slash")
+                }
+                .accessibilityLabel(Text(settings.showCompletedItems ? "Hide Completed Items" : "Show Completed Items"))
             }
         }
         
@@ -103,8 +105,9 @@ struct ShoppingListView: View {
                 item: item,
                 note: $editedNote,
                 label: $editedLabel,
+                quantity: $editedQuantity,
                 onSave: {
-                    viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel)
+                    viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel, newQuantity: editedQuantity)
                     editingItem = nil
                 },
                 onCancel: {
@@ -218,6 +221,7 @@ struct ShoppingListView: View {
                                     editingItem = item
                                     editedNote = item.note ?? ""
                                     editedLabel = item.label
+                                    editedQuantity = item.quantity
                                 })
 
                                 if item.id != sortedItems.last?.id {
@@ -408,14 +412,27 @@ struct ShoppingListItemView: View {
 
     var body: some View {
         HStack {
+            if let quantity = item.quantity {
+                Text("\(quantity.clean)")
+                    .font(.system(size: 14))
+                    .fontWeight(.regular)
+                    .strikethrough(item.checked, color: .gray)
+                    .foregroundColor(item.checked ? .gray : .primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(item.checked ? Color.clear : Color(.systemGray5))
+                    )
+            }
             Text(item.note ?? "-")
                 .font(.system(size: 14))
                 .fontWeight(.regular)
                 .strikethrough(item.checked, color: .gray)
                 .foregroundColor(item.checked ? .gray : .primary)
-
+            
             Spacer()
-
+            
             Image(systemName: item.checked ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 18))
                 .foregroundColor(item.checked ? .green : .gray)
@@ -482,6 +499,8 @@ struct EditShoppingItemView: View {
     let item: ShoppingItem
     @Binding var note: String
     @Binding var label: ShoppingItem.LabelWrapper?
+    @Binding var quantity: Double?
+    
     var onSave: () -> Void
     var onCancel: () -> Void
     var onDelete: () -> Void
@@ -494,6 +513,22 @@ struct EditShoppingItemView: View {
             Form {
                 Section(header: Text("Item Name")) {
                     TextField("Note", text: $note)
+                }
+                
+                Section(header: Text("Quantity")) {
+                    Stepper(value: Binding(
+                        get: { quantity ?? 0 },
+                        set: { quantity = $0 }
+                    ), in: 1...100, step: 1) {
+                        Text(quantity == nil ? "None" : "\(quantity!.clean)")
+                    }
+                    
+                    if quantity != 1 {
+                        Button("Reset quantity") {
+                            quantity = 1
+                        }
+                        .foregroundColor(.red)
+                    }
                 }
 
                 Section(header: Text("Item Label")) {
@@ -647,5 +682,11 @@ extension Color {
         
         // Calculate luminance with standard formula
         return 0.299 * r + 0.587 * g + 0.114 * b
+    }
+}
+
+extension Double {
+    var clean: String {
+        return truncatingRemainder(dividingBy: 1) == 0 ? String(Int(self)) : String(self)
     }
 }
