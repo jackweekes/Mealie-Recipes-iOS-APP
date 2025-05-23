@@ -6,6 +6,7 @@ class ShoppingListViewModel: ObservableObject {
     @Published var archivedLists: [[ShoppingItem]] = []
     @Published var availableLabels: [ShoppingItem.LabelWrapper] = []
     @Published var availableShoppingLists: [ShoppingList] = []
+    @Published var isConnectedToAPI: Bool = true
 
 
     init() {
@@ -27,9 +28,11 @@ class ShoppingListViewModel: ObservableObject {
                 try await APIService.shared.updateShoppingItem(updatedItem)
                 if let index = shoppingList.firstIndex(where: { $0.id == item.id }) {
                     shoppingList[index] = updatedItem
+                    self.isConnectedToAPI = true
                 }
             } catch {
                 print("❌ Fehler beim Update: \(error.localizedDescription)")
+                self.isConnectedToAPI = false
             }
         }
     }
@@ -45,6 +48,7 @@ class ShoppingListViewModel: ObservableObject {
                     try await APIService.shared.deleteShoppingItem(id: item.id)
                 } catch {
                     print("❌ Fehler beim Löschen eines Elements: \(error.localizedDescription)")
+                    
                 }
             }
         }
@@ -58,8 +62,11 @@ class ShoppingListViewModel: ObservableObject {
             item.label = label
             shoppingList.append(item)
             print("🛒 Added item, total count now: \(shoppingList.count)")
+            self.isConnectedToAPI = true
         } catch {
             print("❌ Fehler beim Hinzufügen: \(error)")
+            self.isConnectedToAPI = false
+            
         }
     }
 
@@ -70,6 +77,7 @@ class ShoppingListViewModel: ObservableObject {
             self.availableLabels = labels
         } catch {
             print("❌ Fehler beim Laden der Labels: \(error.localizedDescription)")
+            
         }
     }
 
@@ -91,6 +99,7 @@ class ShoppingListViewModel: ObservableObject {
                         newNotes.append(note)
                     } catch {
                         print("❌ Fehler beim Hinzufügen von '\(note)': \(error.localizedDescription)")
+                        
                     }
                 } else {
                     print("⚠️ '\(note)' ist bereits auf der Liste.")
@@ -104,6 +113,7 @@ class ShoppingListViewModel: ObservableObject {
                     self.shoppingList = updatedItems
                 } catch {
                     print("❌ Fehler beim Neuladen der Liste: \(error.localizedDescription)")
+                    
                 }
             }
         }
@@ -117,6 +127,7 @@ class ShoppingListViewModel: ObservableObject {
             }
         } catch {
             print("❌ Fehler beim Laden der Einkaufsliste(n): \(error.localizedDescription)")
+           
         }
     }
 
@@ -161,8 +172,10 @@ class ShoppingListViewModel: ObservableObject {
             // pulling the labels from a seperate API call instead so they all show
             //self.availableLabels = extractLabelsFromItems(items)
             print("✅ Einkaufsliste geladen: \(items.count) Einträge")
+            self.isConnectedToAPI = true
         } catch {
             print("❌ Fehler beim Laden der Einkaufsliste von Mealie: \(error.localizedDescription)")
+            self.isConnectedToAPI = false
         }
     }
 

@@ -179,6 +179,7 @@ struct ShoppingListView: View {
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(backgroundColor)
+                                    .background(backgroundColor)
                                     .foregroundColor(fgColor)
                                     .cornerRadius(16)
 
@@ -246,83 +247,105 @@ struct ShoppingListView: View {
     }
 
     private func inputSection(padding: CGFloat) -> some View {
-        VStack(spacing: 12) {
-            HStack {
-                TextField(LocalizedStringProvider.localized("add_item_placeholder"), text: $newItemNote)
-                    .padding(10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
-                    .focused($isInputFocused)
-                    .font(.subheadline)
-                    .onSubmit {
-                        addItem()
-                    }
-
-                Button(action: addItem) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.accentColor)
-                }
-                .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-
-            ZStack {
-                // Scrollable chips
-                LabelChipSelector(selectedLabel: $selectedLabel, availableLabels: viewModel.availableLabels, colorScheme: colorScheme)
-
-                // Left fade
-                HStack {
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color(.systemGray5), .clear]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(width: 20)
-                    Spacer()
-                }
-
-                // Right fade
-                HStack {
-                    Spacer()
-                    LinearGradient(
-                        gradient: Gradient(colors: [.clear, Color(.systemGray5)]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(width: 20)
-                }
-            }
-            .frame(height: 30) // Adjust to match the chip height
-            .clipped()
-            
-            
-            // Button nur anzeigen wenn kein Fokus
-            if settings.showCompleteShoppingButton && !isInputFocused {
-                Button {
-                    viewModel.archiveList()
-                    showArchiveAlert = true
-                } label: {
+        Group {
+            if viewModel.isConnectedToAPI {
+                VStack(spacing: 12) {
                     HStack {
-                        Image(systemName: "archivebox.fill")
-                        Text(LocalizedStringProvider.localized("complete_shopping"))
+                        TextField(LocalizedStringProvider.localized("add_item_placeholder"), text: $newItemNote)
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
+                            .focused($isInputFocused)
+                            .font(.subheadline)
+                            .onSubmit {
+                                addItem()
+                            }
+
+                        Button(action: addItem) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(.accentColor)
+                        }
+                        .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
-                    .font(.system(size: 16))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+
+                    ZStack {
+                        LabelChipSelector(selectedLabel: $selectedLabel, availableLabels: viewModel.availableLabels, colorScheme: colorScheme)
+
+                        HStack {
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color(.systemGray5), .clear]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .frame(width: 20)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Spacer()
+                            LinearGradient(
+                                gradient: Gradient(colors: [.clear, Color(.systemGray5)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .frame(width: 20)
+                        }
+                    }
+                    .frame(height: 30)
+                    .clipped()
+
+                    if settings.showCompleteShoppingButton && !isInputFocused {
+                        Button {
+                            viewModel.archiveList()
+                            showArchiveAlert = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "archivebox.fill")
+                                Text(LocalizedStringProvider.localized("complete_shopping"))
+                            }
+                            .font(.system(size: 16))
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .transition(.opacity)
+                    }
                 }
-                .transition(.opacity)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 12)
+                .padding(.top, 12)
+                .animation(.easeOut(duration: 0.1), value: keyboardHeight)
+                .animation(.easeInOut, value: isInputFocused)
+                .background(Color(.systemGray5))
+            } else {
+                VStack(spacing: 12) {
+                    Image(systemName: "wifi.slash")
+                        .font(.system(size: 20))
+                        .foregroundColor(.red)
+
+                    Text("Connection to the Mealie server lost.")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
+
+                    Text("Please check your internet connection or try again later.")
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color(.systemGray5))
+                .cornerRadius(12)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 8)
+                .padding(.top, 8)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.bottom, 12)
-        .padding(.top, 12)
-        .animation(.easeOut(duration: 0.1), value: keyboardHeight)
-        .animation(.easeInOut, value: isInputFocused)
-        .background(Color(.systemGray5))
     }
 
     private func categoryChip(label: ShoppingItem.LabelWrapper?, name: String) -> some View {
