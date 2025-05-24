@@ -159,7 +159,35 @@ class ShoppingListViewModel: ObservableObject {
         shoppingList[index].quantity = newQuantity
 
         Task {
-            await updateIngredientOnServer(item: shoppingList[index])
+            await syncIngredientWithServer(item: shoppingList[index])
+        }
+    }
+    
+    func updateIngredientOnServer(
+        itemID: UUID,
+        newNote: String,
+        newLabel: ShoppingItem.LabelWrapper?,
+        newQuantity: Double?
+    ) async -> Bool {
+        guard let index = shoppingList.firstIndex(where: { $0.id == itemID }) else {
+            print("❌ Item mit ID \(itemID) nicht gefunden")
+            return false
+        }
+
+        var updatedItem = shoppingList[index]
+        updatedItem.note = newNote
+        updatedItem.label = newLabel
+        updatedItem.quantity = newQuantity
+
+        do {
+            try await APIService.shared.updateShoppingItem(updatedItem)
+            shoppingList[index] = updatedItem // only after confirmation
+            self.isConnectedToAPI = true
+            return true
+        } catch {
+            print("❌ Fehler beim Update auf dem Server: \(error.localizedDescription)")
+            self.isConnectedToAPI = false
+            return false
         }
     }
 
@@ -204,7 +232,7 @@ private func extractLabelsFromItems(_ items: [ShoppingItem]) -> [ShoppingItem.La
     return unique.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
 }*/
 
-private func updateIngredientOnServer(item: ShoppingItem) async {
+private func syncIngredientWithServer(item: ShoppingItem) async {
     do {
         try await APIService.shared.updateShoppingItem(item)
     } catch {

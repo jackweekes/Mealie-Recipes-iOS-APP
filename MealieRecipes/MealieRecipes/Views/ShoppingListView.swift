@@ -17,6 +17,7 @@ struct ShoppingListView: View {
     @State private var editedNote: String = ""
     @State private var editedLabel: ShoppingItem.LabelWrapper? = nil
     @State private var editedQuantity: Double? = nil
+    @State private var showConnectionToast = false
     
 
     var body: some View {
@@ -25,30 +26,26 @@ struct ShoppingListView: View {
                 let isLandscape = geometry.size.width > geometry.size.height
                 let horizontalPadding = isLandscape ? geometry.size.width * 0.2 : 0.0
 
-                VStack {
-                    ScrollView {
-                        VStack {
-                            if viewModel.shoppingList.isEmpty {
-                                EmptyListView(isLandscape: isLandscape)
-                            } else {
-                                shoppingListItemsView
-                                    .padding(.horizontal, horizontalPadding)
+                VStack(spacing: 0) {
+                                ScrollView {
+                                    VStack {
+                                        if viewModel.shoppingList.isEmpty {
+                                            EmptyListView(isLandscape: isLandscape)
+                                        } else {
+                                            shoppingListItemsView
+                                                .padding(.horizontal, horizontalPadding)
+                                                .padding(.top, 40)
+                                        }
+                                    }
+                                }
+                                .refreshable {
+                                    await viewModel.loadShoppingListFromServer()
+                                    await viewModel.loadLabels()
+                                }
+                                .frame(maxWidth: .infinity)
+                                inputSection()
+
                             }
-                        }
-                    }
-                    .refreshable {
-                        await viewModel.loadShoppingListFromServer()
-                        await viewModel.loadLabels()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top)
-
-                    Spacer()
-
-                    inputSection(padding: horizontalPadding)
-                }
-
-                .background(Color(.systemGroupedBackground).ignoresSafeArea())
                 .overlay(
                     Group {
                         if showSuccessToast {
@@ -86,6 +83,9 @@ struct ShoppingListView: View {
                 }
                 .navigationTitle(" \(LocalizedStringProvider.localized("shopping_list"))")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                
                 
                 }
             }
@@ -100,15 +100,30 @@ struct ShoppingListView: View {
             }
         }
         
+        
         .sheet(item: $editingItem) { item in
             EditShoppingItemView(
+                viewModel: viewModel,
                 item: item,
                 note: $editedNote,
                 label: $editedLabel,
                 quantity: $editedQuantity,
                 onSave: {
-                    viewModel.updateIngredient(item: item, newNote: editedNote, newLabel: editedLabel, newQuantity: editedQuantity)
-                    editingItem = nil
+                    Task {
+                        let success = await viewModel.updateIngredientOnServer(
+                            itemID: item.id,
+                            newNote: editedNote,
+                            newLabel: editedLabel,
+                            newQuantity: editedQuantity
+                        )
+
+                        if success {
+                            editingItem = nil
+                        } else {
+                            // Optional: Show an error toast or alert
+                            print("❌ Update failed, item not saved.")
+                        }
+                    }
                 },
                 onCancel: {
                     editingItem = nil
@@ -203,6 +218,7 @@ struct ShoppingListView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 10)
                         .background(backgroundColorParent)
+                        .background(.clear)
                         //.background(Color(.systemGroupedBackground))
                         .cornerRadius(10)
                     }
@@ -245,106 +261,101 @@ struct ShoppingListView: View {
         }
         .padding(.bottom)
     }
+    
 
-    private func inputSection(padding: CGFloat) -> some View {
-        Group {
-            if viewModel.isConnectedToAPI {
-                VStack(spacing: 12) {
-                    HStack {
-                        TextField(LocalizedStringProvider.localized("add_item_placeholder"), text: $newItemNote)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
-                            .focused($isInputFocused)
-                            .font(.subheadline)
-                            .onSubmit {
-                                addItem()
-                            }
 
-                        Button(action: addItem) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundColor(.accentColor)
-                        }
-                        .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
+    @ViewBuilder
+    private func inputSection() -> some View {
+        if viewModel.isConnectedToAPI {
+            VStack(spacing: 12) {
+                // Prevent top-edge artifacts
+                Color.clear
+                    .frame(height: 0)
+                    .frame(maxWidth: .infinity)
 
-                    ZStack {
-                        LabelChipSelector(selectedLabel: $selectedLabel, availableLabels: viewModel.availableLabels, colorScheme: colorScheme)
-
-                        HStack {
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color(.systemGray5), .clear]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                            .frame(width: 20)
-                            Spacer()
-                        }
-
-                        HStack {
-                            Spacer()
-                            LinearGradient(
-                                gradient: Gradient(colors: [.clear, Color(.systemGray5)]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                            .frame(width: 20)
-                        }
-                    }
-                    .frame(height: 30)
-                    .clipped()
-
-                    if settings.showCompleteShoppingButton && !isInputFocused {
-                        Button {
-                            viewModel.archiveList()
-                            showArchiveAlert = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "archivebox.fill")
-                                Text(LocalizedStringProvider.localized("complete_shopping"))
-                            }
-                            .font(.system(size: 16))
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                        .transition(.opacity)
-                    }
-                }
-                .padding(.horizontal, 10)
-                .padding(.bottom, 12)
-                .padding(.top, 12)
-                .animation(.easeOut(duration: 0.1), value: keyboardHeight)
-                .animation(.easeInOut, value: isInputFocused)
-                .background(Color(.systemGray5))
-            } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "wifi.slash")
-                        .font(.system(size: 20))
-                        .foregroundColor(.red)
-
-                    Text("Connection to the Mealie server lost.")
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.primary)
-
-                    Text("Please check your internet connection or try again later.")
+                // Input field + button
+                HStack(spacing: 8) {
+                    TextField(LocalizedStringProvider.localized("add_item_placeholder"), text: $newItemNote)
+                        .padding(10)
+                        .background(Color.clear) // fully transparent
+                        .cornerRadius(12)
+                        .focused($isInputFocused)
                         .font(.subheadline)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
+                        .onSubmit { addItem() }
+                        .overlay( // Add a subtle border if needed, but transparent background
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+
+                    Button(action: addItem) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.accentColor)
+                    }
+                    .disabled(newItemNote.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
+
+                // Label selector with fading gradients
+                ZStack {
+                    LabelChipSelector(
+                        selectedLabel: $selectedLabel,
+                        availableLabels: viewModel.availableLabels,
+                        colorScheme: colorScheme
+                    )
+                    .background(Color.clear) // Ensure transparent background
+
+                    HStack {
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(.systemBackground), .clear]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: 20)
+                        Spacer()
+                    }
+
+                    HStack {
+                        Spacer()
+                        LinearGradient(
+                            gradient: Gradient(colors: [.clear, Color(.systemBackground)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: 20)
+                    }
+                }
+                .frame(height: 30)
+                .clipped()
+
+                if settings.showCompleteShoppingButton && !isInputFocused {
+                    Button {
+                        viewModel.archiveList()
+                        showArchiveAlert = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "archivebox.fill")
+                            Text(LocalizedStringProvider.localized("complete_shopping"))
+                        }
+                        .font(.system(size: 16))
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .background(Color.clear) // Make sure the whole VStack is transparent
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
+            .animation(.easeOut(duration: 0.2), value: keyboardHeight)
+            .animation(.easeInOut, value: isInputFocused)
+        } else {
+            ConnectionLostToast()
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(.systemGray5))
-                .cornerRadius(12)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 8)
-                .padding(.top, 8)
-            }
+                .background(Color.clear)
         }
     }
 
@@ -519,78 +530,116 @@ struct EmptyListView: View {
 }
 
 struct EditShoppingItemView: View {
+    let viewModel: ShoppingListViewModel
     let item: ShoppingItem
     @Binding var note: String
     @Binding var label: ShoppingItem.LabelWrapper?
     @Binding var quantity: Double?
-    
+
     var onSave: () -> Void
     var onCancel: () -> Void
     var onDelete: () -> Void
     let availableLabels: [ShoppingItem.LabelWrapper]
 
     @Environment(\.colorScheme) var colorScheme
+    
+        
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Item Name")) {
-                    TextField("Note", text: $note)
-                }
-                
-                Section(header: Text("Quantity")) {
-                    Stepper(value: Binding(
-                        get: { quantity ?? 0 },
-                        set: { quantity = $0 }
-                    ), in: 1...100, step: 1) {
-                        Text(quantity == nil ? "None" : "\(quantity!.clean)")
+            VStack(spacing: 0) {
+                Form {
+                    Section(header: Text("Item Name")) {
+                        TextField("Note", text: $note)
                     }
-                    
-                    if quantity != 1 {
-                        Button("Reset quantity") {
-                            quantity = 1
-                        }
-                        .foregroundColor(.red)
-                    }
-                }
 
-                Section(header: Text("Item Label")) {
-                    LabelChipSelector(
-                        selectedLabel: $label,
-                        availableLabels: availableLabels,
-                        colorScheme: colorScheme
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 0) // reduced custom padding
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)) // remove default insets
-                }
-                
-            }
-            .navigationTitle("Edit Item")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        onCancel()
+                    Section(header: Text("Quantity")) {
+                        Stepper(value: Binding(
+                            get: { quantity ?? 0 },
+                            set: { quantity = $0 }
+                        ), in: 1...100, step: 1) {
+                            Text(quantity == nil ? "None" : "\(quantity!.clean)")
+                        }
+
+                        if quantity != 1 {
+                            Button("Reset quantity") {
+                                quantity = 1
+                            }
+                            .foregroundColor(.red)
+                        }
+                    }
+
+                    Section(header: Text("Item Label")) {
+                        LabelChipSelector(
+                            selectedLabel: $label,
+                            availableLabels: availableLabels,
+                            colorScheme: colorScheme
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 0)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                .navigationTitle("Edit Item")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            onCancel()
+                        }
+                    }
+
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
                         Button(role: .destructive) {
                             onDelete()
                         } label: {
                             Image(systemName: "trash")
                         }
                         .tint(.red)
+                        
+                        Button("Save") {
+                            onSave()
+                        }
                     }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave()
-                    }
+                }
+
+                if !viewModel.isConnectedToAPI {
+                    ConnectionLostToast()
+                        .padding(.horizontal)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.easeInOut, value: viewModel.isConnectedToAPI)
                 }
             }
         }
     }
-    
+}
+
+struct ConnectionLostToast: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 20))
+                .foregroundColor(.red)
+
+            Text("Connection to Mealie server lost.")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary)
+
+            Text("Please check your internet connection or try again later.")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color(.systemGray5))
+        .cornerRadius(12)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 8)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
 }
 
 struct LabelChipSelector: View {
