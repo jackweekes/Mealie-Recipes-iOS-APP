@@ -546,6 +546,7 @@ struct EditShoppingItemView: View {
         
 
     var body: some View {
+        
         NavigationView {
             VStack(spacing: 0) {
                 Form {

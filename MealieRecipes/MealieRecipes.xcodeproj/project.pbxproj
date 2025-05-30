@@ -411,12 +411,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = Q84VVPH7B3;
+				CURRENT_PROJECT_VERSION = 30;
+				DEVELOPMENT_TEAM = WU49GA3HRA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MealieRecipes/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mealie Recipes";
+				INFOPLIST_KEY_CFBundleDisplayName = "Yellow Plate";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -428,8 +429,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
-				PRODUCT_BUNDLE_IDENTIFIER = Walfrosch92.MealieRecipes;
+				MARKETING_VERSION = 1.4.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.quiteyellow.yellowplate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -443,12 +444,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = Q84VVPH7B3;
+				CURRENT_PROJECT_VERSION = 30;
+				DEVELOPMENT_TEAM = WU49GA3HRA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MealieRecipes/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mealie Recipes";
+				INFOPLIST_KEY_CFBundleDisplayName = "Yellow Plate";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -460,8 +462,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
-				PRODUCT_BUNDLE_IDENTIFIER = Walfrosch92.MealieRecipes;
+				MARKETING_VERSION = 1.4.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.quiteyellow.yellowplate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
